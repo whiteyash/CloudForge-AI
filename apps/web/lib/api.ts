@@ -185,7 +185,19 @@ export interface Incident {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
 
-class ApiClient {
+export class CloudForgeApiError extends Error {
+  code: "NETWORK_ERROR" | "AUTH_ERROR" | "FORBIDDEN" | "NOT_FOUND" | "SERVER_ERROR" | "INTEGRATION_UNAVAILABLE";
+  status: number;
+
+  constructor(message: string, code: "NETWORK_ERROR" | "AUTH_ERROR" | "FORBIDDEN" | "NOT_FOUND" | "SERVER_ERROR" | "INTEGRATION_UNAVAILABLE", status = 500) {
+    super(message);
+    this.name = "CloudForgeApiError";
+    this.code = code;
+    this.status = status;
+  }
+}
+
+export class ApiClient {
   private token: string | null = null;
 
   constructor() {
@@ -223,11 +235,25 @@ class ApiClient {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const res = await fetch(`${API_BASE_URL}${path}`, {
-      ...options,
-      headers,
-      credentials: "omit",
-    });
+    if (typeof window !== "undefined") {
+      const activeEnv = localStorage.getItem("cf_environment") || "dev";
+      headers["X-CloudForge-Environment"] = activeEnv.toUpperCase();
+    }
+
+    let res: Response;
+    try {
+      res = await fetch(`${API_BASE_URL}${path}`, {
+        ...options,
+        headers,
+        credentials: "omit",
+      });
+    } catch {
+      throw new CloudForgeApiError(
+        "Unable to connect to CloudForge API. Please verify network connection or server status.",
+        "NETWORK_ERROR",
+        503
+      );
+    }
 
     if (!res.ok) {
       const errorText = await res.text();
@@ -238,7 +264,16 @@ class ApiClient {
       } catch {
         if (errorText) errorMessage = errorText;
       }
-      throw new Error(errorMessage);
+
+      if (res.status === 401) {
+        throw new CloudForgeApiError("Your session has expired. Please sign in again.", "AUTH_ERROR", 401);
+      } else if (res.status === 403) {
+        throw new CloudForgeApiError("You don't have permission to perform this action in this environment.", "FORBIDDEN", 403);
+      } else if (res.status === 404) {
+        throw new CloudForgeApiError("The requested resource could not be found.", "NOT_FOUND", 404);
+      } else {
+        throw new CloudForgeApiError(errorMessage, "SERVER_ERROR", res.status);
+      }
     }
 
     if (res.status === 204) return {} as T;
