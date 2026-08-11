@@ -1,0 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --cf-bg: #0A1020;
+  --cf-surface: #111B2E;
+  --cf-surface-raised: #16233A;
+  --cf-border: #22314D;
+  --cf-text-primary: #E7EDF7;
+  --cf-text-muted: #8B99B8;
+  --cf-signal: #3DD9C4;
+  --cf-healthy: #34D399;
+  --cf-warning: #FBBF24;
+  --cf-critical: #F87171;
+  --radius: 10px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+  background: var(--cf-bg);
+  color: var(--cf-text-primary);
+  font-family: 'Inter', sans-serif;
+}
+
+h1, h2, h3, h4, .font-heading {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+code, pre, .font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Custom Scrollbar for terminal & log views */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--cf-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--cf-border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--cf-text-muted);
+}
+
+/* Signal Pulse Animation */
+@keyframes signalPulse {
+  0%, 100% {
+    opacity: 0.4;
+    box-shadow: 0 0 4px var(--cf-signal);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 12px var(--cf-signal), 0 0 20px var(--cf-signal);
+  }
+}
+
+.animate-signal-pulse {
+  animation: signalPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.signal-line {
+  position: relative;
+}
+.signal-line::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(180deg, transparent 0%, var(--cf-signal) 50%, transparent 100%);
+  animation: signalPulse 3s ease-in-out infinite;
+}

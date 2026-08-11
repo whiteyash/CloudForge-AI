@@ -1,0 +1,41 @@
+server:
+  port: 8000
+
+spring:
+  application:
+    name: cloudforge-api
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/cloudforge}
+    username: ${SPRING_DATASOURCE_USERNAME:cloudforge}
+    password: ${SPRING_DATASOURCE_PASSWORD:change-me-for-local-development}
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  threads:
+    virtual:
+      enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+cloudforge:
+  cors:
+    allowed-origins: ${CLOUDFORGE_CORS_ALLOWED_ORIGINS:http://localhost:3000}
+  jwt:
+    secret: ${CLOUDFORGE_JWT_SECRET:c3VwZXItc2VjcmV0LWp3dC1rZXktY2xvdWRmb3JnZS1haS0zMi1ieXRlcyE=}
+    access-token-ttl: PT15M
+    refresh-token-ttl: P14D

@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloudforge-api-service
+  namespace: cloudforge-system
+spec:
+  type: ClusterIP
+  selector:
+    app: cloudforge-api
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloudforge-web-service
+  namespace: cloudforge-system
+spec:
+  type: ClusterIP
+  selector:
+    app: cloudforge-web
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000

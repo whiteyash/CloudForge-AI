@@ -1,0 +1,30 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+
+# Java / Maven
+target/
+mvn_dist/
+.m2/
+.idea/
+*.iml
+
+# Node / Next.js
+node_modules/
+.next/
+*.tsbuildinfo
+out/
+npm-debug.log*
+
+# Tooling and OS files
+.DS_Store
+coverage/
+htmlcov/
