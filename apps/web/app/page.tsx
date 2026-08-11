@@ -13,23 +13,19 @@ import {
   Plus,
   Zap,
   RefreshCw,
-  Cpu,
-  ShieldCheck,
-  GitBranch,
-  Terminal,
-  CheckCircle2,
-  AlertTriangle,
   Server,
-  Radio,
+  GitBranch,
+  ShieldCheck,
+  CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
 import { api, OrgDashboardSummaryResponse, AuditLogResponse } from "@/lib/api";
 import { useEnvironment } from "@/context/EnvironmentContext";
 import InviteMemberModal from "@/components/modals/InviteMemberModal";
-import CinematicBackground from "@/components/auth/CinematicBackground";
+import CloudControlBackground from "@/components/dashboard/CloudControlBackground";
 
 export default function DashboardPage() {
-  const { environment } = useEnvironment();
+  const { environment, isSwitching, environmentConfig } = useEnvironment();
   const [summary, setSummary] = useState<OrgDashboardSummaryResponse | null>(null);
   const [activity, setActivity] = useState<AuditLogResponse[]>([]);
   const [orgId, setOrgId] = useState<string>("default-org-id");
@@ -49,7 +45,7 @@ export default function DashboardPage() {
         projectsCount: environment === "prod" ? 4 : environment === "staging" ? 3 : 2,
         membersCount: 4,
         teamsCount: 3,
-        pendingInvitations: 2,
+        pendingInvitations: environment === "prod" ? 1 : 2,
         status: "ACTIVE",
         createdAt: new Date().toISOString(),
       });
@@ -107,10 +103,10 @@ export default function DashboardPage() {
   }, [loadData, orgId]);
 
   return (
-    <div className="flex h-screen bg-[#0A1020] text-[#E7EDF7] overflow-hidden relative">
-      {/* Background Interactive Infrastructure Mesh */}
-      <div className="fixed inset-0 w-full h-full z-0 opacity-35 pointer-events-auto">
-        <CinematicBackground />
+    <div className="flex h-screen bg-[#060A14] text-[#E7EDF7] overflow-hidden relative font-sans">
+      {/* Purpose-Built Operational Control Plane Background (Zero Login Text) */}
+      <div className="fixed inset-0 w-full h-full z-0 opacity-40 pointer-events-auto">
+        <CloudControlBackground />
       </div>
 
       <Sidebar />
@@ -134,18 +130,14 @@ export default function DashboardPage() {
                 </span>
                 <span
                   className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full uppercase font-bold border transition-all ${
-                    environment === "prod"
-                      ? "bg-[#F87171]/20 text-[#F87171] border-[#F87171]/40 shadow-[0_0_10px_rgba(248,113,113,0.3)]"
-                      : environment === "staging"
-                      ? "bg-[#FBBF24]/20 text-[#FBBF24] border-[#FBBF24]/40 shadow-[0_0_10px_rgba(251,191,36,0.3)]"
-                      : "bg-[#3DD9C4]/20 text-[#3DD9C4] border-[#3DD9C4]/40 shadow-[0_0_10px_rgba(61,217,196,0.3)]"
-                  }`}
+                    environmentConfig.badgeBg
+                  } ${environmentConfig.badgeText} ${environmentConfig.badgeBorder}`}
                 >
-                  ENV: {environment}
+                  ENV: {environmentConfig.label}
                 </span>
               </div>
               <p className="text-xs text-[#8B99B8] flex items-center gap-2">
-                <span>Enterprise Kubernetes &amp; Cloud Operations Control Plane</span>
+                <span>{environmentConfig.description}</span>
                 <span>•</span>
                 <span>slug: <strong className="font-mono text-[#3DD9C4]">{summary?.slug || "org-workspace"}</strong></span>
               </p>
@@ -157,7 +149,7 @@ export default function DashboardPage() {
                 className="p-2.5 rounded-xl bg-[#16233A]/80 border border-[#22314D] text-[#8B99B8] hover:text-[#E7EDF7] hover:border-[#3DD9C4]/40 transition-all cursor-pointer"
                 title="Refresh Metrics"
               >
-                <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-[#3DD9C4]" : ""}`} />
+                <RefreshCw className={`w-4 h-4 ${loading || isSwitching ? "animate-spin text-[#3DD9C4]" : ""}`} />
               </button>
               <button
                 onClick={() => setInviteModalOpen(true)}
@@ -186,7 +178,7 @@ export default function DashboardPage() {
               </div>
               <div className="mt-2 flex items-center justify-between text-[10px] font-mono">
                 <span className="text-[#3DD9C4]">Active in {environment.toUpperCase()}</span>
-                <span className="text-emerald-400 font-bold">+100% healthy</span>
+                <span className="text-emerald-400 font-bold">Scoped</span>
               </div>
             </Link>
 
@@ -224,7 +216,7 @@ export default function DashboardPage() {
               </div>
               <div className="mt-2 flex items-center justify-between text-[10px] font-mono">
                 <span className="text-[#FBBF24]">Awaiting Acceptance</span>
-                <span className="text-[#FBBF24] font-bold">Token Active</span>
+                <span className="text-[#FBBF24] font-bold">Active Token</span>
               </div>
             </Link>
 
@@ -250,7 +242,6 @@ export default function DashboardPage() {
 
           {/* Infrastructure Health & Telemetry Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Kubernetes Operations & Pod Health */}
             <div className="p-6 rounded-3xl bg-[#050F25]/60 backdrop-blur-2xl border border-[#3DD9C4]/35 shadow-[0_0_40px_rgba(61,217,196,0.12)] space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -258,22 +249,18 @@ export default function DashboardPage() {
                   <h2 className="text-sm font-heading font-bold text-[#E7EDF7]">Kubernetes Cluster Health</h2>
                 </div>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold">
-                  8/8 NODES READY
+                  READY
                 </span>
               </div>
 
               <div className="space-y-3">
                 <div className="p-3 rounded-xl bg-[#0A1020]/80 border border-[#22314D] flex items-center justify-between text-xs font-mono">
-                  <span className="text-[#8B99B8]">Control Plane Target</span>
-                  <span className="text-[#3DD9C4] font-bold">{environment.toUpperCase()}-K8S-CLUSTER-01</span>
+                  <span className="text-[#8B99B8]">Target Environment</span>
+                  <span className="text-[#3DD9C4] font-bold">{environment.toUpperCase()}-K8S-CLUSTER</span>
                 </div>
                 <div className="p-3 rounded-xl bg-[#0A1020]/80 border border-[#22314D] flex items-center justify-between text-xs font-mono">
-                  <span className="text-[#8B99B8]">Workload Pods</span>
-                  <span className="text-emerald-400 font-bold">24 Running / 0 Failing</span>
-                </div>
-                <div className="p-3 rounded-xl bg-[#0A1020]/80 border border-[#22314D] flex items-center justify-between text-xs font-mono">
-                  <span className="text-[#8B99B8]">Memory Utilization</span>
-                  <span className="text-[#4A72FF] font-bold">42.8% (14.2 GB / 32 GB)</span>
+                  <span className="text-[#8B99B8]">Node Status</span>
+                  <span className="text-emerald-400 font-bold">{environment === "prod" ? "12/12 Nodes" : environment === "staging" ? "6/6 Nodes" : "3/3 Nodes"}</span>
                 </div>
               </div>
 
@@ -281,12 +268,11 @@ export default function DashboardPage() {
                 href="/k8s"
                 className="w-full py-2 rounded-xl bg-[#16233A] border border-[#22314D] text-[#3DD9C4] hover:bg-[#1e2f4d] text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
               >
-                <span>Inspect Cluster Workloads</span>
+                <span>Inspect {environment.toUpperCase()} Clusters</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
-            {/* CI/CD Release & Pipeline Engine */}
             <div className="p-6 rounded-3xl bg-[#050F25]/60 backdrop-blur-2xl border border-[#4A72FF]/35 shadow-[0_0_40px_rgba(74,114,255,0.12)] space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -300,19 +286,15 @@ export default function DashboardPage() {
 
               <div className="space-y-3">
                 <div className="p-3 rounded-xl bg-[#0A1020]/80 border border-[#22314D] flex items-center justify-between text-xs font-mono">
-                  <span className="text-[#8B99B8]">Latest Build</span>
-                  <span className="text-[#E7EDF7] font-bold">#142-release-v2.4.0</span>
+                  <span className="text-[#8B99B8]">Target Release</span>
+                  <span className="text-[#E7EDF7] font-bold">release-{environment}-v2.4.0</span>
                 </div>
                 <div className="p-3 rounded-xl bg-[#0A1020]/80 border border-[#22314D] flex items-center justify-between text-xs font-mono">
                   <span className="text-[#8B99B8]">Pipeline Status</span>
                   <span className="text-emerald-400 font-bold flex items-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    SUCCESS (2m 14s)
+                    SUCCESS
                   </span>
-                </div>
-                <div className="p-3 rounded-xl bg-[#0A1020]/80 border border-[#22314D] flex items-center justify-between text-xs font-mono">
-                  <span className="text-[#8B99B8]">Deployment Target</span>
-                  <span className="text-[#3DD9C4] font-bold">{environment.toUpperCase()} US-EAST-1</span>
                 </div>
               </div>
 
@@ -320,12 +302,11 @@ export default function DashboardPage() {
                 href="/cicd"
                 className="w-full py-2 rounded-xl bg-[#16233A] border border-[#22314D] text-[#4A72FF] hover:bg-[#1e2f4d] text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
               >
-                <span>View Pipeline Console</span>
+                <span>View {environment.toUpperCase()} Pipelines</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
-            {/* Security Posture & Vulnerability Scanner */}
             <div className="p-6 rounded-3xl bg-[#050F25]/60 backdrop-blur-2xl border border-[#A855F7]/35 shadow-[0_0_40px_rgba(168,85,247,0.12)] space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -333,22 +314,18 @@ export default function DashboardPage() {
                   <h2 className="text-sm font-heading font-bold text-[#E7EDF7]">Security Posture</h2>
                 </div>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#A855F7]/20 text-[#A855F7] border border-[#A855F7]/30 font-bold">
-                  SOC-2 COMPLIANT
+                  VERIFIED
                 </span>
               </div>
 
               <div className="space-y-3">
                 <div className="p-3 rounded-xl bg-[#0A1020]/80 border border-[#22314D] flex items-center justify-between text-xs font-mono">
-                  <span className="text-[#8B99B8]">Security Score</span>
-                  <span className="text-emerald-400 font-bold">98.5 / 100</span>
-                </div>
-                <div className="p-3 rounded-xl bg-[#0A1020]/80 border border-[#22314D] flex items-center justify-between text-xs font-mono">
                   <span className="text-[#8B99B8]">Scanner Status</span>
                   <span className="text-[#3DD9C4] font-bold">SCAN_COMPLETED</span>
                 </div>
                 <div className="p-3 rounded-xl bg-[#0A1020]/80 border border-[#22314D] flex items-center justify-between text-xs font-mono">
-                  <span className="text-[#8B99B8]">Critical CVEs</span>
-                  <span className="text-emerald-400 font-bold">0 Detected</span>
+                  <span className="text-[#8B99B8]">Security Policy</span>
+                  <span className="text-emerald-400 font-bold">{environment.toUpperCase()}-STRICT</span>
                 </div>
               </div>
 
@@ -356,7 +333,7 @@ export default function DashboardPage() {
                 href="/security"
                 className="w-full py-2 rounded-xl bg-[#16233A] border border-[#22314D] text-[#A855F7] hover:bg-[#1e2f4d] text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
               >
-                <span>Open Security Center</span>
+                <span>Inspect {environment.toUpperCase()} Scans</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
@@ -367,7 +344,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Activity className="w-4 h-4 text-[#3DD9C4]" />
-                <h2 className="text-sm font-heading font-bold text-[#E7EDF7]">Recent Organization Audit Activity</h2>
+                <h2 className="text-sm font-heading font-bold text-[#E7EDF7]">Recent {environment.toUpperCase()} Audit Activity</h2>
               </div>
               <Link
                 href="/audit-logs"
@@ -381,7 +358,7 @@ export default function DashboardPage() {
             <div className="space-y-3">
               {activity.length === 0 ? (
                 <div className="text-center py-6 text-xs text-[#8B99B8]">
-                  No audit activity recorded yet.
+                  No audit activity recorded for {environment.toUpperCase()}.
                 </div>
               ) : (
                 activity.map((item) => (
@@ -411,15 +388,15 @@ export default function DashboardPage() {
               href="/cicd"
               className="p-4 rounded-xl bg-[#050F25]/60 border border-[#22314D] hover:border-[#3DD9C4] transition-all text-xs font-mono flex items-center justify-between cursor-pointer"
             >
-              <span className="text-[#8B99B8]">Active Pipelines</span>
-              <span className="text-[#3DD9C4] font-bold">1 Running</span>
+              <span className="text-[#8B99B8]">{environment.toUpperCase()} Pipelines</span>
+              <span className="text-[#3DD9C4] font-bold">Active</span>
             </Link>
 
             <Link
               href="/incidents"
               className="p-4 rounded-xl bg-[#050F25]/60 border border-[#22314D] hover:border-[#3DD9C4] transition-all text-xs font-mono flex items-center justify-between cursor-pointer"
             >
-              <span className="text-[#8B99B8]">Open Incidents</span>
+              <span className="text-[#8B99B8]">{environment.toUpperCase()} Incidents</span>
               <span className="text-emerald-400 font-bold">0 Active</span>
             </Link>
 
@@ -427,16 +404,16 @@ export default function DashboardPage() {
               href="/security"
               className="p-4 rounded-xl bg-[#050F25]/60 border border-[#22314D] hover:border-[#3DD9C4] transition-all text-xs font-mono flex items-center justify-between cursor-pointer"
             >
-              <span className="text-[#8B99B8]">Security Alerts</span>
-              <span className="text-[#FBBF24] font-bold">1 Warning</span>
+              <span className="text-[#8B99B8]">{environment.toUpperCase()} Security</span>
+              <span className="text-[#FBBF24] font-bold">Clean</span>
             </Link>
 
             <Link
               href="/projects"
               className="p-4 rounded-xl bg-[#050F25]/60 border border-[#22314D] hover:border-[#3DD9C4] transition-all text-xs font-mono flex items-center justify-between cursor-pointer"
             >
-              <span className="text-[#8B99B8]">Deployments</span>
-              <span className="text-[#4A72FF] font-bold">100% Success</span>
+              <span className="text-[#8B99B8]">{environment.toUpperCase()} Deployments</span>
+              <span className="text-[#4A72FF] font-bold">Verified</span>
             </Link>
           </div>
         </main>
