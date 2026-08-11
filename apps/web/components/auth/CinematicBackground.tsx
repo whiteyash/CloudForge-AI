@@ -134,8 +134,8 @@ function calculateResponsiveLayout(width: number, height: number): ResponsivePar
 
   if (isSmallMobile) {
     coreX = width * 0.5;
-    coreY = isLandscape ? height * 0.28 : height * 0.20;
-    corePulseSize = Math.min(55, width * 0.12);
+    coreY = isLandscape ? height * 0.35 : height * 0.42;
+    corePulseSize = Math.min(65, width * 0.14);
   } else if (isTablet) {
     coreX = isLandscape ? width * 0.35 : width * 0.5;
     coreY = isLandscape ? height * 0.45 : height * 0.24;
