@@ -18,7 +18,7 @@ class GitEncryptionServiceTest {
 
     @Test
     void testEncryptAndDecrypt() {
-        String token = "ghp_1234567890abcdefghijklmnopqrstuvwxyz";
+        String token = "TEST_GITHUB_TOKEN_PLACEHOLDER";
         String encrypted = encryptionService.encrypt(token);
 
         assertNotNull(encrypted);

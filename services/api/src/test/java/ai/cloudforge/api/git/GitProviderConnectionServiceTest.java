@@ -34,7 +34,7 @@ class GitProviderConnectionServiceTest {
         UUID orgId = UUID.randomUUID();
         String provider = "GITHUB";
         String account = "cloudforge-org";
-        String token = "ghp_token123";
+        String token = "TEST_GITHUB_TOKEN_PLACEHOLDER";
 
         when(repository.findByOrgIdAndProviderNameAndAccountName(orgId, provider, account))
                 .thenReturn(Optional.empty());

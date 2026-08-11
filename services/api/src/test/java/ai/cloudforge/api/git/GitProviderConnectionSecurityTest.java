@@ -48,7 +48,7 @@ class GitProviderConnectionSecurityTest {
 
     @Test
     void testTokenMaskingAndEncryptedPersistence() {
-        String rawToken = "ghp_super_secret_access_token_12345";
+        String rawToken = "TEST_GITHUB_TOKEN_PLACEHOLDER";
         String encrypted = encryptionService.encrypt(rawToken);
 
         // Ensure raw token is not visible in ciphertext
