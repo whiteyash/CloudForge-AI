@@ -15,8 +15,16 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Check if user is already authenticated
+  // Check if user is already authenticated (unless ?logout=true is passed)
   useEffect(() => {
+    if (typeof window !== "undefined" && (window.location.search.includes("logout=true") || window.location.search.includes("clear=true"))) {
+      api.setToken(null);
+      localStorage.removeItem("cf_access_token");
+      localStorage.removeItem("cloudforge_jwt_token");
+      localStorage.removeItem("cf_user_session");
+      return;
+    }
+
     const token = api.getToken();
     if (token) {
       api.me()
