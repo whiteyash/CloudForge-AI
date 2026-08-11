@@ -15,19 +15,19 @@ An enterprise-grade, AI-augmented internal developer platform and AIOps control 
 
 ```mermaid
 flowchart TD
-    subgraph Client [Mission Control Frontend (Next.js 16 / React 19)]
+    subgraph Client ["Mission Control Frontend (Next.js 16 / React 19)"]
         UI[Mission Control Dashboard]
         CopilotUI[Enterprise AI Copilot UI]
         OpsUI[Human Approval Operations UI]
     end
 
-    subgraph Gateway [API Layer (Spring Boot 3.5 / Spring Security)]
+    subgraph Gateway ["API Layer (Spring Boot 3.5 / Spring Security)"]
         JWT[JWT & RBAC Security Filter]
         REST[REST Controllers - 39 Endpoints]
         Audit[AuditLogger & Personal Audit Stream]
     end
 
-    subgraph Core [Business Platforms (Phases 1 - 5)]
+    subgraph Core ["Business Platforms (Phases 1 – 5)"]
         AuthService[Identity & Organization Platform]
         ProjectService[Project & Environment Platform]
         GitService[Git Provider Sync & Webhook Platform]
@@ -36,7 +36,7 @@ flowchart TD
         DeployService[Deployment Engine Service]
     end
 
-    subgraph AI [Enterprise AI Suite (Phases 6.0 - 6.6)]
+   subgraph AI ["Enterprise AI Suite (Phases 6.0 – 6.6)"]
         AIOps[Phase 6.0 AIOps & Incident Intelligence]
         Logs[Phase 6.1 Log Intelligence & Stack Trace Parsing]
         RCA[Phase 6.2 Root Cause Intelligence & Causal Graph]
