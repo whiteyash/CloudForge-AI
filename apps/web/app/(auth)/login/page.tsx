@@ -1,3 +1,4 @@
+// CloudForge AI Enterprise Mission Control - Mobile & Desktop Cinematic Auth Entry
 "use client";
 
 import React, { useState, useEffect } from "react";
