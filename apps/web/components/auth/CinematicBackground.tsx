@@ -37,8 +37,8 @@ interface FloatingBadge {
   x: number;
   y: number;
   z: number;
-  relX: number; // Relative viewport factor (-0.4 to 0.4)
-  relY: number; // Relative viewport factor (-0.4 to 0.4)
+  relX: number;
+  relY: number;
   color: string;
   icon: string;
 }
@@ -95,6 +95,105 @@ const SCENES: SceneInfo[] = [
   },
 ];
 
+interface ResponsiveParams {
+  nodeCount: number;
+  packetCount: number;
+  coreX: number;
+  coreY: number;
+  corePulseSize: number;
+  maxConnectionDist: number;
+  interactionRadius: number;
+  orbitRings: OrbitRing[];
+  badges: FloatingBadge[];
+}
+
+function calculateResponsiveLayout(width: number, height: number): ResponsiveParams {
+  const area = width * height;
+  const isLandscape = width > height;
+  const isSmallMobile = width < 640;
+  const isTablet = width >= 640 && width < 1024;
+  const isUltrawide = width >= 1920;
+
+  // 1. Fluid Node Count Scaling (30 to 110 nodes)
+  let nodeCount = 80;
+  if (isSmallMobile) {
+    nodeCount = Math.round(Math.min(50, Math.max(30, area / 14000)));
+  } else if (isTablet) {
+    nodeCount = Math.round(Math.min(75, Math.max(50, area / 16000)));
+  } else if (isUltrawide) {
+    nodeCount = 110;
+  }
+
+  // 2. Fluid Packet Count Scaling (8 to 26 packets)
+  const packetCount = Math.round(Math.min(26, Math.max(8, area / 45000)));
+
+  // 3. Fluid Central Core Position & Size
+  let coreX = width * 0.32;
+  let coreY = height * 0.48;
+  let corePulseSize = 70;
+
+  if (isSmallMobile) {
+    coreX = width * 0.5;
+    coreY = isLandscape ? height * 0.28 : height * 0.20;
+    corePulseSize = Math.min(55, width * 0.12);
+  } else if (isTablet) {
+    coreX = isLandscape ? width * 0.35 : width * 0.5;
+    coreY = isLandscape ? height * 0.45 : height * 0.24;
+    corePulseSize = 65;
+  } else if (isUltrawide) {
+    coreX = width * 0.30;
+    coreY = height * 0.48;
+    corePulseSize = 85;
+  }
+
+  // 4. Fluid Orbit Rings Radii (Viewport Bounded)
+  const baseRx = Math.min(width * 0.22, isSmallMobile ? 130 : 200);
+  const baseRy = Math.min(height * 0.15, isSmallMobile ? 65 : 100);
+
+  const orbitRings: OrbitRing[] = [
+    { radiusX: baseRx, radiusY: baseRy, rotation: 0.2, speed: 0.004, color: "rgba(61, 217, 196, 0.30)", packetPos: 0 },
+    { radiusX: baseRx * 1.45, radiusY: baseRy * 1.45, rotation: -0.4, speed: -0.003, color: "rgba(74, 114, 255, 0.24)", packetPos: 0.5 },
+    { radiusX: baseRx * 1.9, radiusY: baseRy * 1.9, rotation: 0.6, speed: 0.002, color: "rgba(168, 85, 247, 0.18)", packetPos: 0.2 },
+  ];
+
+  // 5. Fluid Max Connection Distance & Interaction Radius
+  const maxConnectionDist = Math.min(160, Math.max(90, width * 0.11));
+  const interactionRadius = Math.min(220, Math.max(130, width * 0.14));
+
+  // 6. Fluid Viewport Safe-Zone Badge Layout
+  const badgeConfigs = [
+    { label: "K8S", color: "#3DD9C4", icon: "☸", relX: isSmallMobile ? -0.38 : -0.36, relY: isSmallMobile ? -0.38 : -0.36 },
+    { label: "DOCKER", color: "#4A72FF", icon: "🐳", relX: isSmallMobile ? 0.38 : 0.36, relY: isSmallMobile ? -0.38 : -0.36 },
+    { label: "AWS", color: "#FBBF24", icon: "☁", relX: isSmallMobile ? -0.42 : -0.40, relY: 0.0 },
+    { label: "GIT", color: "#F87171", icon: "⎇", relX: isSmallMobile ? 0.42 : 0.40, relY: 0.0 },
+    { label: "AI/ML", color: "#A855F7", icon: "🧠", relX: isSmallMobile ? -0.38 : -0.36, relY: isSmallMobile ? 0.38 : 0.36 },
+    { label: "CI/CD", color: "#34D399", icon: "⚡", relX: isSmallMobile ? 0.38 : 0.36, relY: isSmallMobile ? 0.38 : 0.36 },
+  ];
+
+  const badges: FloatingBadge[] = badgeConfigs.map((cfg, idx) => ({
+    label: cfg.label,
+    color: cfg.color,
+    icon: cfg.icon,
+    x: 0,
+    y: 0,
+    relX: cfg.relX,
+    relY: cfg.relY,
+    z: 180 + idx * 35,
+  }));
+
+  return {
+    nodeCount,
+    packetCount,
+    coreX,
+    coreY,
+    corePulseSize,
+    maxConnectionDist,
+    interactionRadius,
+    orbitRings,
+    badges,
+  };
+}
+
 export default function CinematicBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [activeSceneIndex, setActiveSceneIndex] = useState(0);
@@ -114,9 +213,10 @@ export default function CinematicBackground() {
       prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     }
 
-    // Robust Bounds & DPI Strategy
+    // Bounds & DevicePixelRatio Safeguards
     let width = 0;
     let height = 0;
+    let layoutParams: ResponsiveParams = calculateResponsiveLayout(800, 600);
 
     const updateBounds = () => {
       if (!canvas) return;
@@ -131,11 +231,14 @@ export default function CinematicBackground() {
       canvas.width = width * dpr;
       canvas.height = height * dpr;
       ctx.scale(dpr, dpr);
+
+      // Recompute Responsive Layout Parameters Dynamically on Resize / Orientation Change
+      layoutParams = calculateResponsiveLayout(width, height);
     };
 
     updateBounds();
 
-    // Pointer & Touch Tracking with Smooth Damping
+    // Pointer & Touch Tracking with Smooth Inertia
     let cursorX = width / 2;
     let cursorY = height / 2;
     let targetCameraX = 0;
@@ -157,7 +260,6 @@ export default function CinematicBackground() {
       targetCameraY = (cursorY - height / 2) * 0.04;
       isPointerActive = true;
 
-      // Dynamic influence ripple trigger
       if (Math.random() < 0.2) {
         rippleRadius = 12;
         rippleAlpha = 0.65;
@@ -198,14 +300,13 @@ export default function CinematicBackground() {
       resizeObserver.observe(canvas.parentElement);
     }
 
-    // Adaptive Node Density
-    const isMobile = width < 768;
-    const NODE_COUNT = isMobile ? 48 : 80;
+    // Node & Cluster Initialization
+    const MAX_NODES = 110;
     const nodes: Node3D[] = [];
     const colors = ["#3DD9C4", "#4A72FF", "#34D399", "#A855F7"];
     const clusters: Array<"k8s" | "cicd" | "git" | "ai" | "core"> = ["k8s", "cicd", "git", "ai", "core"];
 
-    for (let i = 0; i < NODE_COUNT; i++) {
+    for (let i = 0; i < MAX_NODES; i++) {
       const z = Math.random() * 650 + 50;
       const layer = z > 480 ? "far" : z > 240 ? "mid" : "near";
       const cluster = clusters[i % clusters.length];
@@ -226,45 +327,17 @@ export default function CinematicBackground() {
       });
     }
 
-    // Data Signals traveling along network topology lines
+    // Data Signals traveling along topology lines
     const packets: DataPacket[] = [];
-    for (let p = 0; p < (isMobile ? 12 : 22); p++) {
+    for (let p = 0; p < 26; p++) {
       packets.push({
-        p1Index: Math.floor(Math.random() * NODE_COUNT),
-        p2Index: Math.floor(Math.random() * NODE_COUNT),
+        p1Index: Math.floor(Math.random() * MAX_NODES),
+        p2Index: Math.floor(Math.random() * MAX_NODES),
         progress: Math.random(),
         speed: 0.005 + Math.random() * 0.008,
         color: colors[p % colors.length],
       });
     }
-
-    // Interactive Orbit Rings
-    const orbitRings: OrbitRing[] = [
-      { radiusX: isMobile ? 140 : 190, radiusY: isMobile ? 70 : 95, rotation: 0.2, speed: 0.004, color: "rgba(61, 217, 196, 0.30)", packetPos: 0 },
-      { radiusX: isMobile ? 210 : 290, radiusY: isMobile ? 105 : 145, rotation: -0.4, speed: -0.003, color: "rgba(74, 114, 255, 0.24)", packetPos: 0.5 },
-      { radiusX: isMobile ? 280 : 390, radiusY: isMobile ? 140 : 195, rotation: 0.6, speed: 0.002, color: "rgba(168, 85, 247, 0.18)", packetPos: 0.2 },
-    ];
-
-    // Floating Technology Badges Distributed Viewport-Wide
-    const badgeConfigs = [
-      { label: "K8S", color: "#3DD9C4", icon: "☸", relX: -0.38, relY: -0.36 },
-      { label: "DOCKER", color: "#4A72FF", icon: "🐳", relX: 0.38, relY: -0.36 },
-      { label: "AWS", color: "#FBBF24", icon: "☁", relX: -0.41, relY: 0.0 },
-      { label: "GIT", color: "#F87171", icon: "⎇", relX: 0.41, relY: 0.0 },
-      { label: "AI/ML", color: "#A855F7", icon: "🧠", relX: -0.36, relY: 0.36 },
-      { label: "CI/CD", color: "#34D399", icon: "⚡", relX: 0.36, relY: 0.36 },
-    ];
-
-    const badges: FloatingBadge[] = badgeConfigs.map((cfg, idx) => ({
-      label: cfg.label,
-      color: cfg.color,
-      icon: cfg.icon,
-      x: 0,
-      y: 0,
-      relX: cfg.relX,
-      relY: cfg.relY,
-      z: 180 + idx * 35,
-    }));
 
     const FOCAL_LENGTH = 420;
     let time = 0;
@@ -297,8 +370,8 @@ export default function CinematicBackground() {
 
       // 2. Viewport-Wide Atmospheric Glow
       const bgGlow = ctx.createRadialGradient(
-        width * (isMobile ? 0.5 : 0.35), height * (isMobile ? 0.25 : 0.48), 60,
-        width * (isMobile ? 0.5 : 0.35), height * (isMobile ? 0.25 : 0.48), Math.max(width, height) * 0.85
+        layoutParams.coreX, layoutParams.coreY, 60,
+        layoutParams.coreX, layoutParams.coreY, Math.max(width, height) * 0.85
       );
       bgGlow.addColorStop(0, "rgba(74, 114, 255, 0.18)");
       bgGlow.addColorStop(0.35, "rgba(61, 217, 196, 0.09)");
@@ -308,9 +381,9 @@ export default function CinematicBackground() {
       ctx.fillRect(0, 0, width, height);
 
       // 3. Central AI Breathing Energy Core
-      const coreX = width * (isMobile ? 0.5 : 0.32);
-      const coreY = height * (isMobile ? 0.22 : 0.48);
-      const pulseSize = Math.sin(time * 2.5) * 8 + (isMobile ? 52 : 70);
+      const coreX = layoutParams.coreX;
+      const coreY = layoutParams.coreY;
+      const pulseSize = Math.sin(time * 2.5) * 8 + layoutParams.corePulseSize;
 
       const coreGlow = ctx.createRadialGradient(coreX, coreY, 0, coreX, coreY, pulseSize * 2.6);
       coreGlow.addColorStop(0, "rgba(61, 217, 196, 0.32)");
@@ -321,7 +394,7 @@ export default function CinematicBackground() {
       ctx.arc(coreX, coreY, pulseSize * 2.6, 0, Math.PI * 2);
       ctx.fill();
 
-      // Concentric Pulse Rings around Core
+      // Concentric Pulse Rings
       ctx.lineWidth = 1.3;
       ctx.strokeStyle = `rgba(61, 217, 196, ${0.18 + Math.sin(time * 2) * 0.1})`;
       ctx.beginPath();
@@ -329,7 +402,7 @@ export default function CinematicBackground() {
       ctx.stroke();
 
       // 4. Interactive Orbit Ring System
-      orbitRings.forEach((ring) => {
+      layoutParams.orbitRings.forEach((ring) => {
         ring.rotation += ring.speed;
         ring.packetPos = (ring.packetPos + 0.006) % 1;
 
@@ -397,10 +470,11 @@ export default function CinematicBackground() {
         }
       }
 
-      // 8. Project 3D Nodes
+      // 8. Project 3D Nodes (Sliced according to layoutParams.nodeCount)
       const projected: Array<{ sx: number; sy: number; scale: number; p: Node3D; index: number }> = [];
+      const activeNodes = nodes.slice(0, layoutParams.nodeCount);
 
-      nodes.forEach((p, idx) => {
+      activeNodes.forEach((p, idx) => {
         if (!prefersReducedMotion) {
           p.x += p.vx;
           p.y += p.vy;
@@ -421,8 +495,8 @@ export default function CinematicBackground() {
           const dy = cursorY - sy;
           const dist = Math.sqrt(dx * dx + dy * dy);
 
-          if (dist < 180 && dist > 1) {
-            const factor = 1 - dist / 180;
+          if (dist < layoutParams.interactionRadius && dist > 1) {
+            const factor = 1 - dist / layoutParams.interactionRadius;
             const force = (p.layer === "near" ? 15 : -17) * factor;
             sx += (dx / dist) * force;
             sy += (dy / dist) * force;
@@ -443,16 +517,16 @@ export default function CinematicBackground() {
           const dx = p1.sx - p2.sx;
           const dy = p1.sy - p2.sy;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          const maxDist = isMobile ? 110 : 145;
+          const maxDist = layoutParams.maxConnectionDist;
 
           if (dist < maxDist) {
-            let alpha = (1 - dist / maxDist) * (isMobile ? 0.38 : 0.32);
+            let alpha = (1 - dist / maxDist) * 0.34;
 
             if (isPointerActive && !prefersReducedMotion) {
               const cdist = Math.sqrt(
                 Math.pow((p1.sx + p2.sx) / 2 - cursorX, 2) + Math.pow((p1.sy + p2.sy) / 2 - cursorY, 2)
               );
-              if (cdist < 170) alpha *= 1.9;
+              if (cdist < layoutParams.interactionRadius) alpha *= 1.9;
             }
 
             ctx.strokeStyle = `rgba(61, 217, 196, ${Math.min(alpha, 0.65)})`;
@@ -465,10 +539,11 @@ export default function CinematicBackground() {
       }
 
       // 10. Data Signals Traveling on Connections
-      packets.forEach((pkt) => {
+      const activePackets = packets.slice(0, layoutParams.packetCount);
+      activePackets.forEach((pkt) => {
         pkt.progress = (pkt.progress + pkt.speed) % 1;
-        const n1 = projected.find((item) => item.index === pkt.p1Index);
-        const n2 = projected.find((item) => item.index === pkt.p2Index);
+        const n1 = projected.find((item) => item.index === (pkt.p1Index % projected.length));
+        const n2 = projected.find((item) => item.index === (pkt.p2Index % projected.length));
 
         if (n1 && n2) {
           const px = n1.sx + (n2.sx - n1.sx) * pkt.progress;
@@ -500,7 +575,7 @@ export default function CinematicBackground() {
       });
 
       // 12. Render Floating Technology Badges
-      badges.forEach((b) => {
+      layoutParams.badges.forEach((b) => {
         const scale = FOCAL_LENGTH / (FOCAL_LENGTH + b.z);
         let bx = width / 2 + width * b.relX * scale - cameraX * (scale * 1.5);
         let by = height / 2 + height * b.relY * scale - cameraY * (scale * 1.5);
@@ -519,11 +594,12 @@ export default function CinematicBackground() {
 
         if (bx >= 15 && bx <= width - 15 && by >= 15 && by <= height - 15) {
           ctx.save();
-          ctx.font = `bold ${isMobile ? "9px" : "10px"} monospace`;
+          const isSmall = width < 640;
+          ctx.font = `bold ${isSmall ? "9px" : "10px"} monospace`;
           const badgeText = `${b.icon} ${b.label}`;
           const metrics = ctx.measureText(badgeText);
-          const bw = metrics.width + (isMobile ? 12 : 16);
-          const bh = isMobile ? 19 : 22;
+          const bw = metrics.width + (isSmall ? 12 : 16);
+          const bh = isSmall ? 19 : 22;
 
           // Glass Pill Background
           ctx.fillStyle = "rgba(10, 20, 40, 0.82)";
@@ -537,7 +613,7 @@ export default function CinematicBackground() {
 
           // Label
           ctx.fillStyle = "#E7EDF7";
-          ctx.fillText(badgeText, bx - bw / 2 + (isMobile ? 6 : 8), by + (isMobile ? 3 : 3.5));
+          ctx.fillText(badgeText, bx - bw / 2 + (isSmall ? 6 : 8), by + (isSmall ? 3 : 3.5));
           ctx.restore();
         }
       });
@@ -583,7 +659,7 @@ export default function CinematicBackground() {
         </div>
       </div>
 
-      {/* Dynamic Desktop Headlines (Hidden on small mobile to avoid form overlap) */}
+      {/* Dynamic Desktop Scene Headline Overlay */}
       <div className="relative z-10 max-w-xl my-auto hidden lg:block">
         <div
           className={`transition-all duration-700 ease-out transform ${
@@ -602,7 +678,7 @@ export default function CinematicBackground() {
         </div>
       </div>
 
-      {/* Scene Navigator Dots */}
+      {/* Scene Dots Navigator */}
       <div className="relative z-10 flex items-center justify-between pt-4 sm:pt-6 border-t border-[#22314D]/40">
         <div className="flex items-center gap-2">
           {SCENES.map((_, idx) => (
