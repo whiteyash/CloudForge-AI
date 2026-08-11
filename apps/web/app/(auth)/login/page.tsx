@@ -78,13 +78,13 @@ export default function LoginPage() {
       </div>
 
       {/* Right Panel: Glassmorphism Mission Control Login Card */}
-      <div className="w-full lg:w-5/12 min-h-screen flex flex-col justify-center items-center p-6 sm:p-12 relative z-20 bg-[#0A1020]/95 lg:bg-[#0A1020]/90 backdrop-blur-2xl">
+      <div className="w-full lg:w-5/12 min-h-screen flex flex-col justify-center items-center p-6 sm:p-12 relative z-20 bg-[#0A1020]/90 lg:bg-[#0A1020]/70 backdrop-blur-2xl">
         {/* Mobile Background Fallback */}
-        <div className="lg:hidden absolute inset-0 w-full h-full pointer-events-none opacity-40 z-0 overflow-hidden">
+        <div className="lg:hidden absolute inset-0 w-full h-full pointer-events-none opacity-50 z-0 overflow-hidden">
           <CinematicBackground />
         </div>
 
-        <div className="w-full max-w-md bg-[#0F172A]/90 backdrop-blur-2xl border border-[#3DD9C4]/30 rounded-3xl p-8 sm:p-10 shadow-[0_0_80px_rgba(61,217,196,0.15)] relative z-10">
+        <div className="w-full max-w-md bg-[#0F172A]/85 backdrop-blur-2xl border border-[#3DD9C4]/35 rounded-3xl p-8 sm:p-10 shadow-[0_0_80px_rgba(61,217,196,0.2)] relative z-10">
           {/* Brand Header */}
           <div className="flex flex-col items-center mb-8 text-center">
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#3DD9C4] via-[#16233A] to-[#0A1020] border border-[#3DD9C4]/40 flex items-center justify-center text-[#0A1020] shadow-[0_0_30px_rgba(61,217,196,0.4)] mb-4 group transition-all duration-300 hover:scale-105">
