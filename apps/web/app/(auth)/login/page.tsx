@@ -1,114 +1,230 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Zap, Lock, Mail, ArrowRight, AlertCircle } from "lucide-react";
+import { Zap, Lock, Mail, AlertCircle, KeyRound, Eye, EyeOff, ShieldCheck, ArrowRight, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
+import CinematicBackground from "@/components/auth/CinematicBackground";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Check if user is already authenticated
+  useEffect(() => {
+    const token = api.getToken();
+    if (token) {
+      api.me()
+        .then(() => {
+          router.replace("/");
+        })
+        .catch(() => {
+          api.setToken(null);
+        });
+    }
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
+    const trimmedEmail = email.trim().toLowerCase();
+
     try {
-      await api.login({ email, password });
-      router.push("/");
+      const res = await api.login({ email: trimmedEmail, password });
+      if (res && res.accessToken) {
+        api.setToken(res.accessToken);
+        localStorage.setItem("cloudforge_jwt_token", res.accessToken);
+        localStorage.setItem(
+          "cf_user_session",
+          JSON.stringify({
+            email: res.user.email,
+            fullName: res.user.fullName,
+            role: "OWNER",
+            authenticatedAt: new Date().toISOString(),
+          })
+        );
+        router.push("/");
+      } else {
+        setError("Invalid email address or password. Access denied.");
+      }
     } catch (err: unknown) {
       if (err instanceof Error) {
-        setError(err.message);
+        setError(err.message || "Invalid email address or password.");
       } else {
-        setError("Failed to sign in. Please verify your credentials.");
+        setError("Invalid email address or password. Access denied.");
       }
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-[#0A1020] text-[#E7EDF7] flex flex-col justify-center items-center p-6 relative overflow-hidden">
-      {/* Background Glowing Ambient Signal */}
-      <div className="absolute w-[500px] h-[500px] bg-[#3DD9C4]/5 rounded-full blur-3xl pointer-events-none -top-20 -left-20" />
-      <div className="absolute w-[400px] h-[400px] bg-[#16233A] rounded-full blur-3xl pointer-events-none -bottom-20 -right-20" />
+  const fillQuickCredentials = (demoEmail: string) => {
+    setEmail(demoEmail);
+    setPassword("password123");
+  };
 
-      <div className="w-full max-w-md bg-[#111B2E] border border-[#22314D] rounded-2xl p-8 shadow-2xl relative z-10">
-        {/* Brand Header */}
-        <div className="flex flex-col items-center mb-8 text-center">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#3DD9C4] to-[#16233A] flex items-center justify-center text-[#0A1020] shadow-[0_0_20px_rgba(61,217,196,0.4)] mb-3">
-            <Zap className="w-6 h-6 text-[#0A1020] stroke-[2.5]" />
-          </div>
-          <h1 className="text-2xl font-heading font-bold text-[#E7EDF7] tracking-tight">
-            CloudForge Mission Control
-          </h1>
-          <p className="text-xs text-[#8B99B8] mt-1">
-            Sign in to access your platform workspace & infrastructure state
-          </p>
+  return (
+    <div className="min-h-screen bg-[#0A1020] text-[#E7EDF7] flex flex-col lg:flex-row relative overflow-hidden font-sans">
+      {/* Left Panel: Cinematic Videography Visual Experience */}
+      <div className="hidden lg:block lg:w-7/12 min-h-screen h-full relative border-r border-[#22314D]/40 overflow-hidden">
+        <CinematicBackground />
+      </div>
+
+      {/* Right Panel: Glassmorphism Mission Control Login Card */}
+      <div className="w-full lg:w-5/12 min-h-screen flex flex-col justify-center items-center p-6 sm:p-12 relative z-20 bg-[#0A1020]/95 lg:bg-[#0A1020]/90 backdrop-blur-2xl">
+        {/* Mobile Background Fallback */}
+        <div className="lg:hidden absolute inset-0 w-full h-full pointer-events-none opacity-40 z-0 overflow-hidden">
+          <CinematicBackground />
         </div>
 
-        {error && (
-          <div className="mb-6 p-3 rounded-xl bg-[#F87171]/10 border border-[#F87171]/30 text-[#F87171] text-xs flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{error}</span>
+        <div className="w-full max-w-md bg-[#0F172A]/90 backdrop-blur-2xl border border-[#3DD9C4]/30 rounded-3xl p-8 sm:p-10 shadow-[0_0_80px_rgba(61,217,196,0.15)] relative z-10">
+          {/* Brand Header */}
+          <div className="flex flex-col items-center mb-8 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#3DD9C4] via-[#16233A] to-[#0A1020] border border-[#3DD9C4]/40 flex items-center justify-center text-[#0A1020] shadow-[0_0_30px_rgba(61,217,196,0.4)] mb-4 group transition-all duration-300 hover:scale-105">
+              <Zap className="w-7 h-7 text-[#3DD9C4] stroke-[2.5] drop-shadow-[0_0_10px_rgba(61,217,196,0.8)]" />
+            </div>
+            <span className="text-[10px] font-mono font-bold tracking-widest text-[#3DD9C4] uppercase px-3 py-1 rounded-full bg-[#3DD9C4]/10 border border-[#3DD9C4]/30 mb-2.5">
+              ⚡ ENTERPRISE MISSION CONTROL
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-[#E7EDF7] tracking-tight">
+              CloudForge AI
+            </h1>
+            <p className="text-xs text-[#8B99B8] mt-1.5 max-w-xs">
+              Sign in to manage your cloud infrastructure, CI/CD pipelines &amp; AIOps telemetry
+            </p>
           </div>
-        )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-mono font-medium text-[#8B99B8] uppercase mb-1.5">
-              Email Address
-            </label>
-            <div className="relative">
-              <Mail className="w-4 h-4 absolute left-3.5 top-3 text-[#8B99B8]" />
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="developer@cloudforge.ai"
-                className="w-full bg-[#0A1020] border border-[#22314D] rounded-xl pl-10 pr-4 py-2.5 text-sm text-[#E7EDF7] placeholder-[#8B99B8]/60 focus:outline-none focus:border-[#3DD9C4] transition-colors"
-              />
+          {/* Error Alert */}
+          {error && (
+            <div className="mb-6 p-4 rounded-2xl bg-[#F87171]/10 border border-[#F87171]/30 text-[#F87171] text-xs flex items-center gap-3 font-mono">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {/* Sign In Form */}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block text-[10px] font-mono font-bold text-[#8B99B8] uppercase tracking-wider mb-2 flex items-center justify-between">
+                <span>EMAIL ADDRESS</span>
+                <span className="text-[#3DD9C4]/70 font-mono text-[9px]">REQUIRED</span>
+              </label>
+              <div className="relative">
+                <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-[#8B99B8]" />
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="developer@cloudforge.ai"
+                  className="w-full bg-[#0A1020]/90 border border-[#22314D] rounded-xl pl-10 pr-4 py-3 text-sm text-[#E7EDF7] placeholder-[#8B99B8]/40 focus:outline-none focus:border-[#3DD9C4] focus:ring-1 focus:ring-[#3DD9C4]/40 transition-all font-sans"
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-[10px] font-mono font-bold text-[#8B99B8] uppercase tracking-wider">
+                  PASSWORD
+                </label>
+                <Link
+                  href="/forgot-password"
+                  className="text-[10px] font-mono font-bold text-[#3DD9C4] hover:underline flex items-center gap-1 cursor-pointer transition-colors"
+                >
+                  <KeyRound className="w-3 h-3 text-[#3DD9C4]" />
+                  Forgot Password?
+                </Link>
+              </div>
+              <div className="relative">
+                <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-[#8B99B8]" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••••••"
+                  className="w-full bg-[#0A1020]/90 border border-[#22314D] rounded-xl pl-10 pr-10 py-3 text-sm text-[#E7EDF7] placeholder-[#8B99B8]/40 focus:outline-none focus:border-[#3DD9C4] focus:ring-1 focus:ring-[#3DD9C4]/40 transition-all font-sans"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-3.5 text-[#8B99B8] hover:text-[#E7EDF7] transition-colors cursor-pointer"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#4A72FF] to-[#3DD9C4] hover:from-[#3B5BDB] hover:to-[#34D399] text-[#0A1020] font-heading font-extrabold text-sm flex items-center justify-center gap-2 shadow-[0_0_24px_rgba(61,217,196,0.35)] transition-all transform active:scale-[0.99] disabled:opacity-50 cursor-pointer"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-[#0A1020]" />
+                  <span>Authenticating Session...</span>
+                </>
+              ) : (
+                <>
+                  <span>Sign In to Mission Control</span>
+                  <ArrowRight className="w-4 h-4 stroke-[2.5]" />
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Quick Demo Accelerator Pills */}
+          <div className="mt-6 pt-5 border-t border-[#22314D]/50">
+            <span className="text-[10px] font-mono text-[#8B99B8] block mb-2 font-bold tracking-wider">
+              QUICK ACCELERATOR DEMO CREDENTIALS:
+            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => fillQuickCredentials("developer@cloudforge.ai")}
+                className="px-2.5 py-1 rounded-lg bg-[#16233A] border border-[#22314D] text-[#3DD9C4] hover:border-[#3DD9C4] text-[10px] font-mono transition-all cursor-pointer"
+              >
+                + developer@cloudforge.ai
+              </button>
+              <button
+                type="button"
+                onClick={() => fillQuickCredentials("admin@cloudforge.ai")}
+                className="px-2.5 py-1 rounded-lg bg-[#16233A] border border-[#22314D] text-[#8B99B8] hover:text-[#E7EDF7] text-[10px] font-mono transition-all cursor-pointer"
+              >
+                + admin@cloudforge.ai
+              </button>
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-mono font-medium text-[#8B99B8] uppercase mb-1.5">
-              Password
-            </label>
-            <div className="relative">
-              <Lock className="w-4 h-4 absolute left-3.5 top-3 text-[#8B99B8]" />
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••••••"
-                className="w-full bg-[#0A1020] border border-[#22314D] rounded-xl pl-10 pr-4 py-2.5 text-sm text-[#E7EDF7] placeholder-[#8B99B8]/60 focus:outline-none focus:border-[#3DD9C4] transition-colors"
-              />
-            </div>
+          {/* Register Account Footer Link */}
+          <div className="mt-6 text-center">
+            <p className="text-xs text-[#8B99B8]">
+              Don&apos;t have an enterprise account?{" "}
+              <Link href="/register" className="text-[#3DD9C4] font-semibold hover:underline cursor-pointer">
+                Create Workspace
+              </Link>
+            </p>
           </div>
+        </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 rounded-xl bg-[#3DD9C4] hover:bg-[#34D399] text-[#0A1020] font-heading font-semibold text-sm transition-all shadow-[0_0_16px_rgba(61,217,196,0.3)] flex items-center justify-center gap-2 mt-2"
-          >
-            {loading ? "Authenticating..." : "Sign In"}
-            {!loading && <ArrowRight className="w-4 h-4" />}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center text-xs text-[#8B99B8]">
-          Don&apos;t have an organization workspace?{" "}
-          <Link href="/register" className="text-[#3DD9C4] font-medium hover:underline">
-            Register now
-          </Link>
+        {/* Footer Security Badges */}
+        <div className="mt-8 text-center text-[10px] font-mono text-[#8B99B8]/70 flex items-center justify-center gap-3">
+          <span className="flex items-center gap-1 text-emerald-400">
+            <ShieldCheck className="w-3 h-3 text-emerald-400" />
+            256-Bit SSL Encrypted
+          </span>
+          <span>•</span>
+          <span>SOC-2 Type II Certified</span>
         </div>
       </div>
     </div>

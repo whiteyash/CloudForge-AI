@@ -149,7 +149,7 @@ export default function CopilotPage() {
   const handleGenerateBrief = async () => {
     setLoading(true);
     try {
-      const res = await api.request<any>(`/projects/${projectId}/copilot/executive-brief?periodType=DAILY`).catch(() => null);
+      const res = await api.request<Record<string, Record<string, string>>>(`/projects/${projectId}/copilot/executive-brief?periodType=DAILY`).catch(() => null);
       if (res && res.baseResponse) {
         setBriefContent(res.baseResponse.content || res.baseResponse.summary || "Daily Executive Brief generated.");
       } else {

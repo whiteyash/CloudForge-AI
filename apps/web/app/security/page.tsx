@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
 import { ShieldCheck, ShieldAlert, Key, Lock, CheckCircle2, RefreshCw } from "lucide-react";
@@ -11,7 +11,7 @@ export default function SecurityOverviewPage() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
 
-  const fetchSecurity = async () => {
+  const fetchSecurity = useCallback(async () => {
     setLoading(true);
     try {
       const data = await api.getSecurityOverview();
@@ -26,11 +26,11 @@ export default function SecurityOverviewPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchSecurity();
-  }, []);
+  }, [fetchSecurity]);
 
   return (
     <div className="flex h-screen bg-[#0A1020] text-[#E7EDF7] overflow-hidden">

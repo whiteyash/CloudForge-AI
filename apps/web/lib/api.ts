@@ -483,11 +483,13 @@ class ApiClient {
     });
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async processCopilotChat(projectId: string, orgId: string, prompt: string, conversationId?: string): Promise<any> {
     let url = `/projects/${projectId}/copilot/chat?orgId=${encodeURIComponent(orgId)}&prompt=${encodeURIComponent(prompt)}`;
     if (conversationId) {
       url += `&conversationId=${encodeURIComponent(conversationId)}`;
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return this.request<any>(url, {
       method: "POST",
     });
@@ -514,21 +516,151 @@ class ApiClient {
     });
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async getAnalyticsOverview(projectId: string): Promise<any> {
     return this.request<any>(`/projects/${projectId}/analytics/overview`);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async getDoraMetrics(projectId: string): Promise<any> {
     return this.request<any>(`/projects/${projectId}/analytics/dora`);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async getEnvironments(projectId: string): Promise<any[]> {
     return this.request<any[]>(`/projects/${projectId}/environments`);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async getRunners(projectId: string): Promise<any[]> {
     return this.request<any[]>(`/projects/${projectId}/runners`);
   }
+
+  // Phase 7 Container Registry APIs
+  async getRegistries(projectId: string): Promise<ContainerRegistryDto[]> {
+    return this.request<ContainerRegistryDto[]>(`/projects/${projectId}/registries`);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async connectRegistry(projectId: string, data: any): Promise<ContainerRegistryDto> {
+    return this.request<ContainerRegistryDto>(`/projects/${projectId}/registries`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async testRegistryConnection(projectId: string, data: any): Promise<{ success: boolean; message: string; name?: string; status?: string }> {
+    return this.request<{ success: boolean; message: string; name?: string; status?: string }>(`/projects/${projectId}/registries/test`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async disconnectRegistry(projectId: string, registryId: string): Promise<void> {
+    return this.request<void>(`/projects/${projectId}/registries/${registryId}`, {
+      method: "DELETE",
+    });
+  }
+
+  async getImageRepositories(projectId: string, registryId?: string): Promise<ContainerImageRepositoryDto[]> {
+    const url = registryId
+      ? `/projects/${projectId}/registries/${registryId}/repositories`
+      : `/projects/${projectId}/repositories`;
+    return this.request<ContainerImageRepositoryDto[]>(url);
+  }
+
+  async getImageTags(projectId: string, arg2: string, arg3?: string): Promise<ContainerImageTagDto[]> {
+    const repoId = arg3 || arg2;
+    return this.request<ContainerImageTagDto[]>(`/projects/${projectId}/repositories/${repoId}/tags`);
+  }
+
+  async deleteImageTag(projectId: string, arg2: string, arg3?: string, arg4?: string): Promise<void> {
+    const tagId = arg4 || arg3 || arg2;
+    return this.request<void>(`/projects/${projectId}/tags/${tagId}`, {
+      method: "DELETE",
+    });
+  }
+
+  async getNativeImageBuilds(projectId: string): Promise<NativeImageBuildDto[]> {
+    return this.request<NativeImageBuildDto[]>(`/projects/${projectId}/builds`);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async triggerNativeImageBuild(projectId: string, data: any): Promise<NativeImageBuildDto> {
+    return this.request<NativeImageBuildDto>(`/projects/${projectId}/builds`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+}
+
+export interface ContainerRegistryDto {
+  id: string;
+  projectId: string;
+  name: string;
+  type: string;
+  registryType?: string;
+  serverUrl: string;
+  registryUrl?: string;
+  username?: string;
+  authMethod: string;
+  authType?: string;
+  status: string;
+  lastSyncedAt?: string;
+  createdAt: string;
+}
+
+export interface ContainerImageRepositoryDto {
+  id: string;
+  registryId: string;
+  projectId: string;
+  name: string;
+  repositoryName?: string;
+  description?: string;
+  pullCount: number;
+  tagCount: number;
+  imageCount?: number;
+  lastPushedAt?: string;
+  updatedAt?: string;
+  createdAt: string;
+}
+
+export interface ContainerImageTagDto {
+  id: string;
+  repositoryId: string;
+  tag: string;
+  tagName?: string;
+  digest: string;
+  digestSha256?: string;
+  sizeBytes: number;
+  architecture: string;
+  os: string;
+  isImmutable?: boolean;
+  pullCommand?: string;
+  createdAt: string;
+}
+
+export interface NativeImageBuildDto {
+  id: string;
+  projectId: string;
+  repositoryId?: string;
+  repositoryName?: string;
+  imageTag: string;
+  tagName?: string;
+  buildStatus: string;
+  status?: string;
+  dockerfileName?: string;
+  dockerfilePath?: string;
+  contextPath?: string;
+  buildLog?: string;
+  logOutput?: string;
+  startedAt: string;
+  completedAt?: string;
+  createdAt?: string;
 }
 
 export const api = new ApiClient();
+
+

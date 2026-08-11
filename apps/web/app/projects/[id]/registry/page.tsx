@@ -497,7 +497,7 @@ export default function ContainerRegistryPage({ params }: PageProps) {
                           <td className="p-4 font-mono font-bold text-[#3DD9C4]">{repo.repositoryName}</td>
                           <td className="p-4 font-mono text-[#E7EDF7]">{repo.imageCount} tags</td>
                           <td className="p-4 font-mono">{repo.pullCount} pulls</td>
-                          <td className="p-4 font-mono">{new Date(repo.updatedAt).toLocaleDateString()}</td>
+                          <td className="p-4 font-mono">{new Date(repo.updatedAt || repo.createdAt).toLocaleDateString()}</td>
                           <td className="p-4 text-right">
                             <button
                               onClick={() => {
@@ -565,7 +565,7 @@ export default function ContainerRegistryPage({ params }: PageProps) {
                         </div>
 
                         <button
-                          onClick={() => copyToClipboard(tag.pullCommand, tag.id)}
+                          onClick={() => copyToClipboard(tag.pullCommand || `docker pull ${tag.digestSha256}`, tag.id)}
                           className="px-2.5 py-1 rounded bg-[#16233A] border border-[#22314D] text-[10px] font-bold text-[#E7EDF7] hover:border-[#3DD9C4]/40 flex items-center gap-1.5"
                         >
                           {copiedTagId === tag.id ? <Check className="w-3 h-3 text-[#34D399]" /> : <Copy className="w-3 h-3 text-[#3DD9C4]" />}
@@ -579,36 +579,30 @@ export default function ContainerRegistryPage({ params }: PageProps) {
             </div>
           )}
 
-          {/* TAB 4: NATIVE BUILDS */}
+          {/* TAB 4: NATIVE IMAGE BUILDS */}
           {activeTab === "builds" && (
             <div className="space-y-4">
               {builds.length === 0 ? (
-                <div className="p-8 rounded-2xl bg-[#111B2E] border border-[#22314D] text-center space-y-3">
-                  <Cpu className="w-10 h-10 text-[#8B99B8] mx-auto" />
-                  <h3 className="text-sm font-heading font-bold text-[#E7EDF7]">No Image Builds Triggered</h3>
-                  <p className="text-xs text-[#8B99B8]">Trigger a native container image build from your project repository source code.</p>
-                  <button
-                    onClick={() => setShowBuildModal(true)}
-                    className="px-4 py-2 rounded-xl bg-[#3DD9C4] text-[#0A1020] font-heading font-bold text-xs hover:bg-[#34D399]"
-                  >
-                    Trigger Image Build
-                  </button>
+                <div className="p-8 rounded-2xl bg-[#111B2E] border border-[#22314D] text-center space-y-2">
+                  <Cpu className="w-8 h-8 text-[#8B99B8] mx-auto" />
+                  <h3 className="text-sm font-heading font-bold text-[#E7EDF7]">No Native Build History</h3>
+                  <p className="text-xs text-[#8B99B8]">Trigger a native Docker image build to view build logs and status.</p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {builds.map((b) => (
                     <div key={b.id} className="p-5 rounded-2xl bg-[#111B2E] border border-[#22314D] space-y-4">
                       <div className="flex items-center justify-between">
                         <div>
                           <div className="flex items-center gap-2">
                             <span className="px-2.5 py-0.5 rounded text-[10px] font-mono font-bold bg-[#34D399]/10 text-[#34D399] border border-[#34D399]/30">
-                              {b.status}
+                              {b.status || b.buildStatus}
                             </span>
                             <h3 className="text-sm font-heading font-bold text-[#E7EDF7]">
-                              {b.repositoryName}:{b.tagName}
+                              {b.repositoryName}:{b.tagName || b.imageTag}
                             </h3>
                           </div>
-                          <p className="text-xs text-[#8B99B8] font-mono mt-1">Dockerfile: {b.dockerfilePath} • Triggered: {new Date(b.createdAt).toLocaleString()}</p>
+                          <p className="text-xs text-[#8B99B8] font-mono mt-1">Dockerfile: {b.dockerfilePath || b.dockerfileName} • Triggered: {new Date(b.createdAt || b.startedAt).toLocaleString()}</p>
                         </div>
 
                         <span className="text-[10px] font-mono text-[#8B99B8]">Build ID: #{b.id.substring(0, 8)}</span>

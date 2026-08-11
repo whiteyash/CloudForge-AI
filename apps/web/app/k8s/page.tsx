@@ -1,24 +1,26 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
-import { Boxes, Cpu, Server, Activity, RefreshCw, CheckCircle2, ShieldCheck } from "lucide-react";
+import { Boxes, Cpu, Server, RefreshCw, CheckCircle2, ShieldCheck } from "lucide-react";
 import { api } from "@/lib/api";
 
 export default function K8sOverviewPage() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [nodes, setNodes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
 
-  const fetchK8sStatus = async () => {
+  const fetchK8sStatus = useCallback(async () => {
     setLoading(true);
     try {
       // Fetch runners & environment details representing K8s node pool
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const projects = await api.request<any[]>("/orgs/default-org-id/projects").catch(() => []);
       const projId = projects[0]?.id || "proj-1";
       const runnerList = await api.getRunners(projId).catch(() => []);
-      
+
       setNodes(runnerList.length > 0 ? runnerList : [
         { id: "node-1", name: "k8s-runner-pool-1", status: "ONLINE", labels: "ubuntu-latest, k8s, docker", maxParallelJobs: 8 },
         { id: "node-2", name: "k8s-runner-pool-2", status: "ONLINE", labels: "ubuntu-latest, k8s, docker", maxParallelJobs: 8 },
@@ -32,11 +34,11 @@ export default function K8sOverviewPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchK8sStatus();
-  }, []);
+  }, [fetchK8sStatus]);
 
   return (
     <div className="flex h-screen bg-[#0A1020] text-[#E7EDF7] overflow-hidden">

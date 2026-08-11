@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
-import { Building2, Users, Layers, Mail, Activity, ArrowRight, Plus, ShieldCheck, Zap } from "lucide-react";
+import { Building2, Users, Layers, Mail, Activity, ArrowRight, Plus, Zap } from "lucide-react";
 import Link from "next/link";
 import { api, OrgDashboardSummaryResponse, AuditLogResponse } from "@/lib/api";
 
@@ -12,17 +12,17 @@ export default function DashboardPage() {
   const [activity, setActivity] = useState<AuditLogResponse[]>([]);
   const [orgId, setOrgId] = useState<string>("default-org-id");
 
-  const loadData = async (targetOrgId: string) => {
+  const loadData = useCallback(async (targetOrgId: string) => {
     try {
       const sum = await api.getDashboardSummary(targetOrgId);
       setSummary(sum);
     } catch {
       setSummary({
         id: targetOrgId,
-        name: "CloudForge AI Workspace",
+        name: "CloudForge AI Engineering",
         slug: "cloudforge-engineering",
-        projectsCount: 4,
-        membersCount: 6,
+        projectsCount: 2,
+        membersCount: 3,
         teamsCount: 2,
         pendingInvitations: 1,
         status: "ACTIVE",
@@ -31,8 +31,8 @@ export default function DashboardPage() {
     }
 
     try {
-      const logs = await api.getActivityTimeline(targetOrgId);
-      setActivity(logs.slice(0, 5));
+      const act = await api.getActivityTimeline(targetOrgId);
+      setActivity(act);
     } catch {
       setActivity([
         {
@@ -45,7 +45,7 @@ export default function DashboardPage() {
         },
       ]);
     }
-  };
+  }, []);
 
   useEffect(() => {
     api.me()
@@ -61,7 +61,7 @@ export default function DashboardPage() {
       .catch(() => {
         loadData(orgId);
       });
-  }, []);
+  }, [loadData, orgId]);
 
   return (
     <div className="flex h-screen bg-[#0A1020] text-[#E7EDF7] overflow-hidden">
