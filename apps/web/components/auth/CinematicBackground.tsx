@@ -194,7 +194,13 @@ function calculateResponsiveLayout(width: number, height: number): ResponsivePar
   };
 }
 
+import { useEnvironment, EnvironmentType } from "@/context/EnvironmentContext";
+
 export default function CinematicBackground() {
+  const { environment } = useEnvironment();
+  const envRef = useRef<EnvironmentType>(environment);
+  envRef.current = environment;
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [activeSceneIndex, setActiveSceneIndex] = useState(0);
   const [textFade, setTextFade] = useState(true);
@@ -345,7 +351,9 @@ export default function CinematicBackground() {
     let sceneStartTime = Date.now();
 
     const render = () => {
-      time += 0.012;
+      const curEnv = envRef.current;
+      const envSpeedMult = curEnv === "dev" ? 1.6 : curEnv === "staging" ? 1.0 : 0.6;
+      time += 0.012 * envSpeedMult;
 
       // Synchronized Scene Cycle
       const now = Date.now();
@@ -365,7 +373,7 @@ export default function CinematicBackground() {
       ctx.clearRect(0, 0, width, height);
 
       // 1. Deep Cyber Background Base
-      ctx.fillStyle = "#0A1020";
+      ctx.fillStyle = curEnv === "prod" ? "#070C18" : curEnv === "staging" ? "#0A1020" : "#0D1428";
       ctx.fillRect(0, 0, width, height);
 
       // 2. Viewport-Wide Atmospheric Glow
@@ -373,10 +381,22 @@ export default function CinematicBackground() {
         layoutParams.coreX, layoutParams.coreY, 60,
         layoutParams.coreX, layoutParams.coreY, Math.max(width, height) * 0.85
       );
-      bgGlow.addColorStop(0, "rgba(74, 114, 255, 0.18)");
-      bgGlow.addColorStop(0.35, "rgba(61, 217, 196, 0.09)");
-      bgGlow.addColorStop(0.7, "rgba(168, 85, 247, 0.04)");
-      bgGlow.addColorStop(1, "rgba(10, 16, 32, 1)");
+      if (curEnv === "dev") {
+        bgGlow.addColorStop(0, "rgba(61, 217, 196, 0.26)");
+        bgGlow.addColorStop(0.35, "rgba(168, 85, 247, 0.14)");
+        bgGlow.addColorStop(0.7, "rgba(74, 114, 255, 0.08)");
+        bgGlow.addColorStop(1, "rgba(13, 20, 40, 1)");
+      } else if (curEnv === "staging") {
+        bgGlow.addColorStop(0, "rgba(74, 114, 255, 0.20)");
+        bgGlow.addColorStop(0.35, "rgba(61, 217, 196, 0.10)");
+        bgGlow.addColorStop(0.7, "rgba(168, 85, 247, 0.04)");
+        bgGlow.addColorStop(1, "rgba(10, 16, 32, 1)");
+      } else {
+        bgGlow.addColorStop(0, "rgba(15, 23, 42, 0.40)");
+        bgGlow.addColorStop(0.35, "rgba(61, 217, 196, 0.08)");
+        bgGlow.addColorStop(0.7, "rgba(74, 114, 255, 0.04)");
+        bgGlow.addColorStop(1, "rgba(7, 12, 24, 1)");
+      }
       ctx.fillStyle = bgGlow;
       ctx.fillRect(0, 0, width, height);
 

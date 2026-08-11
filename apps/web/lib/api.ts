@@ -392,6 +392,10 @@ class ApiClient {
     });
   }
 
+  async createInvitation(orgId: string, data: { email: string; role: string }): Promise<InvitationResponse> {
+    return this.inviteMember(orgId, data);
+  }
+
   async acceptInvitation(token: string): Promise<void> {
     return this.request<void>(`/invitations/${token}/accept`, { method: "POST" });
   }

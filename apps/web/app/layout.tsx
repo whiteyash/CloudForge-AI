@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { EnvironmentProvider } from "@/context/EnvironmentContext";
 
 export const metadata: Metadata = {
   title: "CloudForge AI",
@@ -9,7 +10,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <EnvironmentProvider>{children}</EnvironmentProvider>
+      </body>
     </html>
   );
 }
