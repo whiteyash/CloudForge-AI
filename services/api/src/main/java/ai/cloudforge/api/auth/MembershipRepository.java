@@ -19,4 +19,6 @@ public interface MembershipRepository extends JpaRepository<Membership, UUID> {
 
     @Query("SELECT m FROM Membership m WHERE m.organization.id = :orgId AND m.user.id = :userId")
     Optional<Membership> findByOrgIdAndUserId(@Param("orgId") UUID orgId, @Param("userId") UUID userId);
+
+    boolean existsByOrganizationIdAndUserId(UUID orgId, UUID userId);
 }

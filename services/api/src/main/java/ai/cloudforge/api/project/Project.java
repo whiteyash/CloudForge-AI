@@ -31,6 +31,9 @@ public class Project {
     @Column(nullable = false, length = 120)
     private String name;
 
+    @Column(name = "environment", length = 30)
+    private String environment = "DEV";
+
     @Column(name = "repo_url", length = 255)
     private String repoUrl;
 
@@ -40,7 +43,7 @@ public class Project {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    protected Project() {
+    public Project() {
     }
 
     public Project(Organization organization, String name, String repoUrl, String k8sNamespace) {
@@ -61,12 +64,24 @@ public class Project {
         return id;
     }
 
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
     public Organization getOrganization() {
         return organization;
     }
 
     public String getName() {
         return name;
+    }
+
+    public String getEnvironment() {
+        return environment;
+    }
+
+    public void setEnvironment(String environment) {
+        this.environment = environment;
     }
 
     public String getRepoUrl() {

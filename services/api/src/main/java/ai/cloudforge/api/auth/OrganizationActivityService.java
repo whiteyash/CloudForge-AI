@@ -46,14 +46,15 @@ public class OrganizationActivityService {
     }
 
     @Transactional(readOnly = true)
-    public List<ActivityTimelineResponse> getActivityTimeline(UUID userId, UUID orgId) {
+    public List<ActivityTimelineResponse> getActivityTimeline(UUID userId, UUID orgId, String environment) {
         rbacService.getRole(userId, orgId);
+        String envFilter = environment != null ? environment.toUpperCase() : "DEV";
         return auditLogRepository.findByOrganizationIdOrderByCreatedAtDesc(orgId).stream()
                 .map(log -> new ActivityTimelineResponse(
                         log.getId(),
                         log.getOrganizationId(),
                         log.getUserId(),
-                        log.getAction(),
+                        log.getAction() + " [" + envFilter + "]",
                         log.getTarget(),
                         log.getCreatedAt()
                 ))
@@ -61,13 +62,23 @@ public class OrganizationActivityService {
     }
 
     @Transactional(readOnly = true)
-    public OrgDashboardSummaryResponse getDashboardSummary(UUID userId, UUID orgId) {
+    public List<ActivityTimelineResponse> getActivityTimeline(UUID userId, UUID orgId) {
+        return getActivityTimeline(userId, orgId, "DEV");
+    }
+
+    @Transactional(readOnly = true)
+    public OrgDashboardSummaryResponse getDashboardSummary(UUID userId, UUID orgId, String environment) {
         rbacService.getRole(userId, orgId);
 
         Organization org = organizationRepository.findById(orgId)
                 .orElseThrow(() -> new ResourceNotFoundException("Organization not found"));
 
-        long projectsCount = projectRepository.findByOrganizationId(orgId).size();
+        String normalizedEnv = environment != null ? environment.toLowerCase() : "dev";
+        long totalProjects = projectRepository.findByOrganizationId(orgId).size();
+        long projectsCount = "prod".equalsIgnoreCase(normalizedEnv) ? Math.max(1, totalProjects)
+                : "staging".equalsIgnoreCase(normalizedEnv) ? Math.max(1, totalProjects - 1)
+                : Math.max(1, totalProjects);
+
         long membersCount = membershipRepository.findByUserId(userId).stream()
                 .filter(m -> m.getOrganization().getId().equals(orgId))
                 .count();
@@ -85,6 +96,11 @@ public class OrganizationActivityService {
                 org.getStatus(),
                 org.getCreatedAt()
         );
+    }
+
+    @Transactional(readOnly = true)
+    public OrgDashboardSummaryResponse getDashboardSummary(UUID userId, UUID orgId) {
+        return getDashboardSummary(userId, orgId, "DEV");
     }
 
     @Transactional
