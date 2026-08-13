@@ -62,12 +62,13 @@ public class SecurityConfiguration {
 
     @Bean
     CorsConfigurationSource corsConfigurationSource(
-            @Value("${cloudforge.cors.allowed-origins:http://localhost:3000}") String allowedOrigins) {
+            @Value("${cloudforge.cors.allowed-origins:http://localhost:3000,http://localhost:80,https://*.vercel.app,https://*.up.railway.app}") String allowedOrigins) {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.stream(allowedOrigins.split(","))
+        List<String> origins = Arrays.stream(allowedOrigins.split(","))
                 .map(String::trim)
                 .filter(origin -> !origin.isEmpty())
-                .toList());
+                .toList();
+        configuration.setAllowedOriginPatterns(origins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-CloudForge-Environment", "X-Requested-With", "Accept", "*"));
         configuration.setExposedHeaders(List.of("Authorization", "X-CloudForge-Environment", "Set-Cookie"));
