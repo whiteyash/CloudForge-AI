@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import tls from "node:tls";
 import dns from "node:dns/promises";
+import { API_BASE_URL } from "@/lib/api";
 
 // Direct Node.js TLS/Net Socket SMTP Sender
 async function sendRawSmtpEmail({
@@ -183,7 +184,7 @@ export async function POST(request: Request) {
 
     // Forward to Spring Boot backend API to store in PostgreSQL audit logs
     try {
-      await fetch("http://localhost:8000/auth/send-otp", {
+      await fetch(`${API_BASE_URL}/auth/send-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: normalizedEmail, otp: otpCode, fullName: recipientName }),

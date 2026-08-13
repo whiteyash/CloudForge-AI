@@ -187,7 +187,15 @@ export interface Incident {
   createdAt: string;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+const getApiBaseUrl = (): string => {
+  const url = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL;
+  if (!url) {
+    throw new Error("NEXT_PUBLIC_API_URL environment variable is missing!");
+  }
+  return url.replace(/\/$/, "");
+};
+
+export const API_BASE_URL = getApiBaseUrl();
 
 export class CloudForgeApiError extends Error {
   code: "NETWORK_ERROR" | "401_UNAUTHORIZED" | "403_FORBIDDEN" | "404_NOT_FOUND" | "500_BACKEND_ERROR" | "AUTH_ERROR" | "FORBIDDEN" | "NOT_FOUND" | "SERVER_ERROR" | "INTEGRATION_UNAVAILABLE";
