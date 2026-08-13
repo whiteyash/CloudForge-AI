@@ -46,7 +46,7 @@ public class IncidentResponseController {
         return ResponseEntity.ok(incidentService.getIncidentSummary(projectId, userId));
     }
 
-    @PostMapping("/projects/{projectId}/incidents")
+    @PostMapping("/projects/{projectId}/incidents/trigger")
     public ResponseEntity<IncidentResponseDto> triggerIncident(
             @AuthenticationPrincipal AuthPrincipal principal,
             @PathVariable UUID projectId,
@@ -56,7 +56,7 @@ public class IncidentResponseController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    @GetMapping("/projects/{projectId}/incidents")
+    @GetMapping("/projects/{projectId}/incidents/dispatcher")
     public ResponseEntity<List<IncidentResponseDto>> listIncidents(
             @AuthenticationPrincipal AuthPrincipal principal,
             @PathVariable UUID projectId) {
@@ -64,7 +64,7 @@ public class IncidentResponseController {
         return ResponseEntity.ok(incidentService.listIncidents(projectId, userId));
     }
 
-    @GetMapping("/projects/{projectId}/incidents/{incidentId}")
+    @GetMapping("/projects/{projectId}/incidents/dispatcher/{incidentId}")
     public ResponseEntity<IncidentResponseDto> getIncidentDetails(
             @AuthenticationPrincipal AuthPrincipal principal,
             @PathVariable UUID projectId,

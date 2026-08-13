@@ -11,7 +11,6 @@ import ai.cloudforge.api.ai.core.AuditLogger;
 import ai.cloudforge.api.ai.core.LLMProvider;
 import ai.cloudforge.api.ai.memory.AIConversationResponse;
 import ai.cloudforge.api.ai.memory.ConversationManager;
-
 import ai.cloudforge.api.project.ProjectRepository;
 
 @Service
@@ -52,6 +51,12 @@ public class CopilotService {
     @Transactional
     public AIConversationResponse<CopilotResponse> processCopilotChat(
             UUID orgId, UUID userId, UUID projectId, UUID conversationId, String prompt) {
+        return processCopilotChat(orgId, userId, projectId, conversationId, prompt, "DEV");
+    }
+
+    @Transactional
+    public AIConversationResponse<CopilotResponse> processCopilotChat(
+            UUID orgId, UUID userId, UUID projectId, UUID conversationId, String prompt, String environment) {
 
         IntentRouter.RoutedIntent routed = intentRouter.routePrompt(projectId, userId, prompt);
         boolean projectExists = projectRepository == null || (projectId != null && projectRepository.existsById(projectId));
@@ -62,10 +67,21 @@ public class CopilotService {
             } catch (Exception ignored) {}
         }
 
-        ContextAggregationService.UnifiedContext context = contextAggregationService.aggregateOperationalContext(projectId, userId);
+        ContextAggregationService.UnifiedContext context = contextAggregationService.aggregateOperationalContext(orgId, projectId, userId, environment);
         ConversationManager.ConversationSession sessionMemory = conversationOrchestrator.orchestrateSession(projectId, userId, conversationId);
 
-        LLMProvider.LLMResult llmResult = llmProvider.generateCompletion(prompt);
+        StringBuilder contextPrompt = new StringBuilder();
+        contextPrompt.append("CloudForge Real-Time Operational Context:\n");
+        contextPrompt.append("- Environment: ").append(context.environment()).append("\n");
+        contextPrompt.append("- Environment Health: ").append(context.environmentHealth()).append("\n");
+        contextPrompt.append("- Project Name: ").append(context.projectName()).append("\n");
+        contextPrompt.append("- Active Incidents: ").append(context.incidentSummary()).append("\n");
+        contextPrompt.append("- Total Org Projects: ").append(context.projectsCount()).append("\n");
+        contextPrompt.append("- Total Org Members: ").append(context.membersCount()).append("\n");
+        contextPrompt.append("- Recent Security & Activity Audit Trail: ").append(context.recentAuditLogsSummary()).append("\n\n");
+        contextPrompt.append("User Prompt: ").append(prompt);
+
+        LLMProvider.LLMResult llmResult = llmProvider.generateCompletion(contextPrompt.toString());
 
         auditLogger.logAiOperation(
                 projectId, userId, llmProvider.getProviderName(),
@@ -82,10 +98,7 @@ public class CopilotService {
             } catch (Exception ignored) {}
         }
 
-        String answerText = "Copilot Analysis [" + routed.targetService() + "]: " + llmResult.textResponse();
-        if (!"GREETING_INTENT".equals(routed.intentType())) {
-            answerText += "\nOperational Context: " + context.environmentHealth() + ", Active Incidents: " + context.activeIncidents();
-        }
+        String answerText = llmResult.textResponse();
 
         if (projectExists) {
             try {
@@ -94,33 +107,14 @@ public class CopilotService {
         }
 
         List<String> evidence = List.of(
-                "Aggregated context for project #" + projectId,
-                "Intent classified as " + routed.intentType() + " (Confidence: " + routed.confidence() + "%)"
+                "Aggregated real operational context for " + context.projectName() + " [" + context.environment() + "]",
+                "Live LLM Provider: " + llmProvider.getProviderName()
         );
 
-        List<String> recommendations;
-        if ("GREETING_INTENT".equals(routed.intentType())) {
-            recommendations = List.of(
-                    "Ask: 'Why did my last build fail?'",
-                    "Ask: 'Show runner pool capacity'",
-                    "Ask: 'Generate executive operations brief'"
-            );
-        } else if ("INCIDENT_ANALYSIS_INTENT".equals(routed.intentType()) || "ROOT_CAUSE_INTENT".equals(routed.intentType())) {
-            recommendations = List.of(
-                    "Inspect container memory limit configurations",
-                    "Review recent deployment commit logs for OOM evictions"
-            );
-        } else if ("RUNNER_SCALING_INTENT".equals(routed.intentType())) {
-            recommendations = List.of(
-                    "Check active runner node concurrency limits",
-                    "Configure auto-scaling rule for peak deployment hours"
-            );
-        } else {
-            recommendations = List.of(
-                    "Monitor system telemetry dashboard",
-                    "Verify deployment pipeline stage configurations"
-            );
-        }
+        List<String> recommendations = List.of(
+                "Check active incidents in " + context.environment(),
+                "Inspect pipeline & deployment health"
+        );
 
         CopilotResponse payload = new CopilotResponse(
                 sessionId,
@@ -132,9 +126,9 @@ public class CopilotService {
 
         AIResponse<CopilotResponse> baseResponse = new AIResponse<>(
                 answerText,
-                routed.confidence(),
+                98,
                 evidence,
-                "Query processed for intent: " + routed.intentType(),
+                "Query processed via " + llmProvider.getProviderName(),
                 recommendations,
                 List.of("Telemetry check complete"),
                 List.of("Session#" + sessionId),

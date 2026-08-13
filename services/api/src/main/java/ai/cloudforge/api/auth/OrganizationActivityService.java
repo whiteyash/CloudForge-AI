@@ -48,13 +48,19 @@ public class OrganizationActivityService {
     @Transactional(readOnly = true)
     public List<ActivityTimelineResponse> getActivityTimeline(UUID userId, UUID orgId, String environment) {
         rbacService.getRole(userId, orgId);
-        String envFilter = environment != null ? environment.toUpperCase() : "DEV";
-        return auditLogRepository.findByOrganizationIdOrderByCreatedAtDesc(orgId).stream()
+        String envFilter = (environment != null && !environment.isBlank()) ? environment.toUpperCase() : "DEV";
+        
+        List<AuditLog> logs = auditLogRepository.findByOrganizationIdAndEnvironmentOrderByCreatedAtDesc(orgId, envFilter);
+        if (logs.isEmpty()) {
+            logs = auditLogRepository.findByOrganizationIdOrderByCreatedAtDesc(orgId);
+        }
+
+        return logs.stream()
                 .map(log -> new ActivityTimelineResponse(
                         log.getId(),
                         log.getOrganizationId(),
                         log.getUserId(),
-                        log.getAction() + " [" + envFilter + "]",
+                        log.getAction(),
                         log.getTarget(),
                         log.getCreatedAt()
                 ))
@@ -74,15 +80,14 @@ public class OrganizationActivityService {
                 .orElseThrow(() -> new ResourceNotFoundException("Organization not found"));
 
         String normalizedEnv = environment != null ? environment.toLowerCase() : "dev";
+        String envUpper = normalizedEnv.toUpperCase();
         long totalProjects = projectRepository.findByOrganizationId(orgId).size();
         long projectsCount = "prod".equalsIgnoreCase(normalizedEnv) ? Math.max(1, totalProjects)
                 : "staging".equalsIgnoreCase(normalizedEnv) ? Math.max(1, totalProjects - 1)
                 : Math.max(1, totalProjects);
 
-        long membersCount = membershipRepository.findByUserId(userId).stream()
-                .filter(m -> m.getOrganization().getId().equals(orgId))
-                .count();
-        long teamsCount = teamRepository.findByOrganizationId(orgId).size();
+        long membersCount = membershipRepository.findByOrganizationId(orgId).size();
+        long teamsCount = teamRepository.findByOrganizationIdAndEnvironment(orgId, envUpper).size();
         long pendingInvitations = invitationRepository.findByOrganizationIdAndStatus(orgId, "PENDING").size();
 
         return new OrgDashboardSummaryResponse(

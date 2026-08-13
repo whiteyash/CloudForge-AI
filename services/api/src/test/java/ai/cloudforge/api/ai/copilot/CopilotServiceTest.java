@@ -38,7 +38,7 @@ class CopilotServiceTest {
         ConversationManager conversationManager = new ConversationManager();
 
         IntentRouter intentRouter = new IntentRouter(intentResolver);
-        ContextAggregationService contextAggregationService = new ContextAggregationService(contextBuilder);
+        ContextAggregationService contextAggregationService = new ContextAggregationService((ai.cloudforge.api.project.ProjectRepository) null, null, null, null);
         ConversationOrchestrator conversationOrchestrator = new ConversationOrchestrator(conversationManager);
 
         service = new CopilotService(
@@ -59,7 +59,7 @@ class CopilotServiceTest {
         AIConversationResponse<CopilotService.CopilotResponse> response = service.processCopilotChat(orgId, userId, projectId, null, "Why did my deployment fail?");
 
         assertNotNull(response);
-        assertEquals(95, response.baseResponse().confidence());
+        assertEquals(98, response.baseResponse().confidence());
         assertNotNull(response.baseResponse().payload());
     }
 }

@@ -25,6 +25,8 @@ import {
   FolderGit2,
 } from "lucide-react";
 
+import { useLanguage } from "@/lib/i18n";
+
 interface SidebarProps {
   currentOrgName?: string;
   userRole?: string;
@@ -33,6 +35,7 @@ interface SidebarProps {
 export default function Sidebar({ currentOrgName = "CloudForge System", userRole = "OWNER" }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
+  const { t } = useLanguage();
 
   const navItems = [
     { label: "Overview", href: "/", icon: LayoutDashboard },
@@ -123,7 +126,7 @@ export default function Sidebar({ currentOrgName = "CloudForge System", userRole
               <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-[#3DD9C4]" : "group-hover:text-[#E7EDF7]"}`} />
 
               {!collapsed && (
-                <span className="flex-1 truncate">{item.label}</span>
+                <span className="flex-1 truncate">{t(item.label)}</span>
               )}
 
               {!collapsed && item.badge && (
@@ -135,7 +138,7 @@ export default function Sidebar({ currentOrgName = "CloudForge System", userRole
               {/* Tooltip for rail mode */}
               {collapsed && (
                 <div className="absolute left-full ml-2 px-2 py-1 bg-[#16233A] border border-[#22314D] text-[#E7EDF7] text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
-                  {item.label}
+                  {t(item.label)}
                 </div>
               )}
             </Link>

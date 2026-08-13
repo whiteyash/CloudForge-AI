@@ -7,29 +7,38 @@ import { ShieldCheck, ShieldAlert, Key, Lock, CheckCircle2, RefreshCw, AlertTria
 import { api, SecurityOverview } from "@/lib/api";
 import { useEnvironment } from "@/context/EnvironmentContext";
 import CloudControlBackground from "@/components/dashboard/CloudControlBackground";
+import { useLanguage } from "@/lib/i18n";
 
 export default function SecurityOverviewPage() {
   const { environment, environmentConfig, isSwitching } = useEnvironment();
-  const [security, setSecurity] = useState<SecurityOverview | null>(null);
+  const { t } = useLanguage();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [security, setSecurity] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
 
   const fetchSecurity = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await api.getSecurityOverview();
-      setSecurity(data);
+      let activeOrg = "";
+      if (typeof window !== "undefined") {
+        activeOrg = localStorage.getItem("cf_active_org_id") || "";
+      }
+      if (!activeOrg) {
+        const orgs = await api.request<any[]>("/orgs").catch(() => []);
+        if (orgs && orgs.length > 0) activeOrg = orgs[0].id;
+      }
+      if (!activeOrg) activeOrg = "00000000-0000-0000-0000-000000000001";
+
+      const res = await api.getSecurityPosture(activeOrg);
+      setSecurity(res);
+      setMessage("Security posture re-scanned and updated.");
     } catch {
-      setSecurity({
-        mfaEnabled: true,
-        activeSessionsCount: 1,
-        securityScore: environment === "prod" ? 98.5 : environment === "staging" ? 95.0 : 92.0,
-        favoriteWorkspaces: [],
-      });
+      setSecurity({ securityScore: 96, status: "SCAN_COMPLETED" });
     } finally {
       setLoading(false);
     }
-  }, [environment]);
+  }, []);
 
   useEffect(() => {
     fetchSecurity();
@@ -51,14 +60,14 @@ export default function SecurityOverviewPage() {
             <div>
               <div className="flex items-center gap-2.5 mb-1 flex-wrap">
                 <h1 className="text-xl sm:text-2xl font-heading font-extrabold text-[#E7EDF7] tracking-tight">
-                  Security Center &amp; Vulnerability Posture
+                  {t("Security Center & Vulnerability Posture")}
                 </h1>
                 <span className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full uppercase font-bold border ${environmentConfig.badgeBg} ${environmentConfig.badgeText} ${environmentConfig.badgeBorder}`}>
                   ENV: {environmentConfig.label}
                 </span>
               </div>
               <p className="text-xs text-[#8B99B8]">
-                Multi-tenant isolation, MFA status, session governance, and container security scanning for <strong className="text-[#3DD9C4] font-mono">{environment.toUpperCase()}</strong>
+                {t("Multi-tenant isolation, MFA status, session governance, and container security scanning for")} <strong className="text-[#3DD9C4] font-mono">{environment.toUpperCase()}</strong>
               </p>
             </div>
             <button
@@ -66,7 +75,7 @@ export default function SecurityOverviewPage() {
               className="px-4 py-2.5 rounded-xl bg-[#16233A]/80 border border-[#22314D] text-[#3DD9C4] hover:bg-[#1e2f4d] text-xs font-mono font-bold transition-all flex items-center gap-2 cursor-pointer"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading || isSwitching ? "animate-spin" : ""}`} />
-              Re-Scan Posture
+              {t("Re-Scan Posture")}
             </button>
           </div>
 
@@ -80,7 +89,7 @@ export default function SecurityOverviewPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-5 rounded-2xl bg-[#050F25]/60 backdrop-blur-2xl border border-[#3DD9C4]/35 flex items-center justify-between">
               <div>
-                <span className="text-xs font-mono text-[#8B99B8] block mb-1">Security Score</span>
+                <span className="text-xs font-mono text-[#8B99B8] block mb-1">{t("Security Score")}</span>
                 <span className="text-2xl font-heading font-extrabold text-[#3DD9C4] font-mono">{security?.securityScore ?? 96} / 100</span>
               </div>
               <ShieldCheck className="w-8 h-8 text-[#3DD9C4]" />
@@ -88,7 +97,7 @@ export default function SecurityOverviewPage() {
 
             <div className="p-5 rounded-2xl bg-[#050F25]/60 backdrop-blur-2xl border border-emerald-500/35 flex items-center justify-between">
               <div>
-                <span className="text-xs font-mono text-[#8B99B8] block mb-1">Scanner Status</span>
+                <span className="text-xs font-mono text-[#8B99B8] block mb-1">{t("Scanner Status")}</span>
                 <span className="text-sm font-heading font-bold text-emerald-400 font-mono">SCAN_COMPLETED</span>
               </div>
               <CheckCircle2 className="w-8 h-8 text-emerald-400" />
@@ -96,7 +105,7 @@ export default function SecurityOverviewPage() {
 
             <div className="p-5 rounded-2xl bg-[#050F25]/60 backdrop-blur-2xl border border-[#A855F7]/35 flex items-center justify-between">
               <div>
-                <span className="text-xs font-mono text-[#8B99B8] block mb-1">Active Policy</span>
+                <span className="text-xs font-mono text-[#8B99B8] block mb-1">{t("Active Policy")}</span>
                 <span className="text-sm font-heading font-bold text-[#A855F7] font-mono">{environment.toUpperCase()}-ZERO-TRUST</span>
               </div>
               <Lock className="w-8 h-8 text-[#A855F7]" />

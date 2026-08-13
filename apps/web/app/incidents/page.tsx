@@ -8,8 +8,11 @@ import { api, Incident } from "@/lib/api";
 import { useEnvironment } from "@/context/EnvironmentContext";
 import CloudControlBackground from "@/components/dashboard/CloudControlBackground";
 
+import { useLanguage } from "@/lib/i18n";
+
 export default function IncidentsOverviewPage() {
   const { environment, environmentConfig, isSwitching } = useEnvironment();
+  const { t } = useLanguage();
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
@@ -22,9 +25,23 @@ export default function IncidentsOverviewPage() {
   const fetchIncidents = useCallback(async () => {
     setLoading(true);
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const projects = await api.request<any[]>("/orgs/default-org-id/projects").catch(() => []);
+      let activeOrg = "";
+      if (typeof window !== "undefined") {
+        activeOrg = localStorage.getItem("cf_active_org_id") || "";
+      }
+      if (!activeOrg) {
+        const orgs = await api.request<any[]>("/orgs").catch(() => []);
+        if (orgs && orgs.length > 0) activeOrg = orgs[0].id;
+      }
+      if (!activeOrg) {
+        const me = await api.me().catch(() => null);
+        if (me?.organizations && me.organizations.length > 0) activeOrg = me.organizations[0].id;
+      }
+      if (!activeOrg) activeOrg = "00000000-0000-0000-0000-000000000001";
+
+      const projects = await api.request<any[]>(`/orgs/${activeOrg}/projects`).catch(() => []);
       const projId = projects[0]?.id || "proj-1";
+
       const res = await api.getIncidents(projId).catch(() => []);
       setIncidents(res.length > 0 ? res : [
         {
@@ -36,28 +53,9 @@ export default function IncidentsOverviewPage() {
           confidenceScore: 0.94,
           createdAt: new Date().toISOString(),
         },
-        {
-          id: `inc-${environment}-102`,
-          title: `${environment.toUpperCase()} Database Connection Pool Spikes`,
-          severity: "MEDIUM",
-          status: "RESOLVED",
-          rootCause: "Transient connection count surge resolved by auto-scaler",
-          confidenceScore: 0.88,
-          createdAt: new Date(Date.now() - 3600000 * 24).toISOString(),
-        },
       ]);
     } catch {
-      setIncidents([
-        {
-          id: `inc-${environment}-101`,
-          title: `${environment.toUpperCase()} High Latency Alert in Gateway Service`,
-          severity: "HIGH",
-          status: "OPEN",
-          rootCause: `Upstream latency spike detected on ${environment.toUpperCase()} cluster ingress`,
-          confidenceScore: 0.94,
-          createdAt: new Date().toISOString(),
-        },
-      ]);
+      setIncidents([]);
     } finally {
       setLoading(false);
     }
@@ -69,13 +67,23 @@ export default function IncidentsOverviewPage() {
 
   const handleCreateIncident = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!title.trim()) return;
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const projects = await api.request<any[]>("/orgs/default-org-id/projects").catch(() => []);
+      let activeOrg = "";
+      if (typeof window !== "undefined") {
+        activeOrg = localStorage.getItem("cf_active_org_id") || "";
+      }
+      if (!activeOrg) {
+        const orgs = await api.request<any[]>("/orgs").catch(() => []);
+        if (orgs && orgs.length > 0) activeOrg = orgs[0].id;
+      }
+      if (!activeOrg) activeOrg = "00000000-0000-0000-0000-000000000001";
+
+      const projects = await api.request<any[]>(`/orgs/${activeOrg}/projects`).catch(() => []);
       const projId = projects[0]?.id || "proj-1";
-      const newInc = await api.createIncident(projId, "default-org-id", { title, severity, rootCause });
-      setIncidents([newInc, ...incidents]);
-      setMessage(`Incident INC-${newInc.id} declared for ${environment.toUpperCase()}.`);
+      const newInc = await api.createIncident(projId, activeOrg, { title: title.trim(), severity, rootCause: rootCause.trim() });
+      setMessage(`Incident declared for ${environment.toUpperCase()}. Security health score updated.`);
+      await fetchIncidents();
     } catch {
       setIncidents([
         {
@@ -113,14 +121,14 @@ export default function IncidentsOverviewPage() {
             <div>
               <div className="flex items-center gap-2.5 mb-1 flex-wrap">
                 <h1 className="text-xl sm:text-2xl font-heading font-extrabold text-[#E7EDF7] tracking-tight">
-                  Incidents &amp; AI-Powered Root Cause Triage
+                  {t("Incident Management & Root Cause Analysis")}
                 </h1>
                 <span className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full uppercase font-bold border ${environmentConfig.badgeBg} ${environmentConfig.badgeText} ${environmentConfig.badgeBorder}`}>
                   ENV: {environmentConfig.label}
                 </span>
               </div>
               <p className="text-xs text-[#8B99B8]">
-                Real-time incident response, automated AI triage, and resolution tracking for <strong className="text-[#3DD9C4] font-mono">{environment.toUpperCase()}</strong>
+                {t("Active production alerts, automated runbook triggers, and post-mortem analysis")} ({environment.toUpperCase()})
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -129,14 +137,14 @@ export default function IncidentsOverviewPage() {
                 className="p-2.5 rounded-xl bg-[#16233A]/80 border border-[#22314D] text-[#3DD9C4] hover:bg-[#1e2f4d] text-xs font-mono font-bold transition-all flex items-center gap-2 cursor-pointer"
               >
                 <RotateCw className={`w-3.5 h-3.5 ${loading || isSwitching ? "animate-spin" : ""}`} />
-                Refresh Incidents
+                {t("Refresh Incidents")}
               </button>
               <button
                 onClick={() => setShowModal(true)}
                 className="px-4 py-2.5 rounded-xl bg-[#F87171] text-[#0A1020] font-heading font-bold text-xs hover:bg-red-400 transition-all flex items-center gap-1.5 cursor-pointer shadow-[0_0_16px_rgba(248,113,113,0.3)]"
               >
                 <Plus className="w-4 h-4 stroke-[2.5]" />
-                Declare Incident
+                {t("Declare Incident")}
               </button>
             </div>
           </div>

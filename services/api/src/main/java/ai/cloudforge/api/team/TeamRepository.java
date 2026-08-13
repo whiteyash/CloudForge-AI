@@ -12,7 +12,11 @@ public interface TeamRepository extends JpaRepository<Team, UUID> {
 
     List<Team> findByOrganizationId(UUID orgId);
 
+    List<Team> findByOrganizationIdAndEnvironment(UUID orgId, String environment);
+
     Optional<Team> findByIdAndOrganizationId(UUID id, UUID orgId);
 
     boolean existsByOrganizationIdAndNameIgnoreCase(UUID orgId, String name);
+
+    boolean existsByOrganizationIdAndEnvironmentAndNameIgnoreCase(UUID orgId, String environment, String name);
 }

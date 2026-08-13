@@ -30,6 +30,18 @@ public class AuditLog {
     @Column(nullable = false)
     private String target;
 
+    @Column(name = "environment", length = 20)
+    private String environment = "DEV";
+
+    @Column(name = "actor_email")
+    private String actorEmail;
+
+    @Column(name = "ip_address", length = 45)
+    private String ipAddress = "127.0.0.1";
+
+    @Column(name = "metadata_json")
+    private String metadataJson;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
@@ -37,10 +49,22 @@ public class AuditLog {
     }
 
     public AuditLog(UUID organizationId, UUID userId, String action, String target) {
+        this(organizationId, userId, action, target, "DEV", null, null);
+    }
+
+    public AuditLog(UUID organizationId, UUID userId, String action, String target, String environment) {
+        this(organizationId, userId, action, target, environment, null, null);
+    }
+
+    public AuditLog(UUID organizationId, UUID userId, String action, String target, String environment, String actorEmail, String metadataJson) {
         this.organizationId = organizationId;
         this.userId = userId;
         this.action = action;
         this.target = target;
+        this.environment = environment != null ? environment.toUpperCase() : "DEV";
+        this.actorEmail = actorEmail;
+        this.metadataJson = metadataJson;
+        this.createdAt = Instant.now();
     }
 
     public UUID getId() {
@@ -61,6 +85,22 @@ public class AuditLog {
 
     public String getTarget() {
         return target;
+    }
+
+    public String getEnvironment() {
+        return environment;
+    }
+
+    public String getActorEmail() {
+        return actorEmail;
+    }
+
+    public String getIpAddress() {
+        return ipAddress;
+    }
+
+    public String getMetadataJson() {
+        return metadataJson;
     }
 
     public Instant getCreatedAt() {

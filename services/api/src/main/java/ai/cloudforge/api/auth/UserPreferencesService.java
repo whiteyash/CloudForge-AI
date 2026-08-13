@@ -61,10 +61,7 @@ public class UserPreferencesService {
 
     @Transactional(readOnly = true)
     public List<AuditLog> getPersonalAuditTrail(UUID userId) {
-        return auditLogRepository.findAll().stream()
-                .filter(l -> userId.equals(l.getUserId()))
-                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
-                .toList();
+        return auditLogRepository.findByUserIdOrderByCreatedAtDesc(userId);
     }
 
     public record UpdatePreferencesRequest(

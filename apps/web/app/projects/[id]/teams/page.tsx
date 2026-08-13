@@ -1,41 +1,57 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
-import { Users2, Plus, CheckCircle2, UserCheck } from "lucide-react";
-
-interface TeamItem {
-  id: string;
-  name: string;
-  description: string;
-  memberCount: number;
-}
+import { Users2, Plus, CheckCircle2, UserCheck, AlertCircle } from "lucide-react";
+import { api, TeamResponse } from "@/lib/api";
 
 export default function ProjectTeamsPage() {
-  const [teams, setTeams] = useState<TeamItem[]>([
-    { id: "t-1", name: "Core Platform Team", description: "Primary backend engineers and cloud architects", memberCount: 4 },
-    { id: "t-[id]", name: "DevOps & SRE", description: "Infrastructure, CI/CD pipelines, and observability", memberCount: 3 },
-  ]);
-
+  const [teams, setTeams] = useState<TeamResponse[]>([]);
+  const [orgId, setOrgId] = useState<string>("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleCreateTeam = (e: React.FormEvent) => {
+  useEffect(() => {
+    async function load() {
+      try {
+        let activeOrg = localStorage.getItem("cf_active_org_id") || "";
+        if (!activeOrg) {
+          const me = await api.me();
+          if (me.organizations && me.organizations.length > 0) {
+            activeOrg = me.organizations[0].id;
+          }
+        }
+        if (activeOrg) {
+          setOrgId(activeOrg);
+          const data = await api.getTeams(activeOrg);
+          setTeams(data);
+        }
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Failed to load project teams.");
+      }
+    }
+    load();
+  }, []);
+
+  const handleCreateTeam = async (e: React.FormEvent) => {
     e.preventDefault();
-    const item: TeamItem = {
-      id: `t-${Date.now()}`,
-      name,
-      description,
-      memberCount: 1,
-    };
-    setTeams([...teams, item]);
-    setName("");
-    setDescription("");
-    setShowModal(false);
-    setMessage(`Team ${name} created successfully.`);
+    if (!orgId) return;
+    setError(null);
+    setMessage(null);
+    try {
+      const created = await api.createTeam(orgId, { name, description });
+      setTeams((prev) => [...prev, created]);
+      setName("");
+      setDescription("");
+      setShowModal(false);
+      setMessage(`Team ${created.name} created successfully.`);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to create team.");
+    }
   };
 
   return (
@@ -67,6 +83,13 @@ export default function ProjectTeamsPage() {
             </div>
           )}
 
+          {error && (
+            <div className="p-4 rounded-xl bg-[#F87171]/10 border border-[#F87171]/30 text-[#F87171] text-xs flex items-center gap-2 font-mono">
+              <AlertCircle className="w-4 h-4" />
+              <span>{error}</span>
+            </div>
+          )}
+
           {/* Teams Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {teams.map((t) => (
@@ -83,7 +106,7 @@ export default function ProjectTeamsPage() {
 
                 <div className="pt-3 border-t border-[#22314D] flex items-center justify-between text-[10px] font-mono text-[#8B99B8]">
                   <span className="flex items-center gap-1">
-                    <UserCheck className="w-3.5 h-3.5 text-[#3DD9C4]" /> {t.memberCount} Members
+                    <UserCheck className="w-3.5 h-3.5 text-[#3DD9C4]" /> {t.members ? t.members.length : t.membersCount || 0} Members
                   </span>
                   <span>ACTIVE TEAM</span>
                 </div>

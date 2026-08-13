@@ -15,7 +15,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import org.springframework.context.annotation.Primary;
+
 @Component
+@Primary
 public class RealLLMProvider implements LLMProvider {
 
     private static final Logger log = LoggerFactory.getLogger(RealLLMProvider.class);

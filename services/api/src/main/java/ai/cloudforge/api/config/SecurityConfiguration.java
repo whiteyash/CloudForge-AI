@@ -51,7 +51,9 @@ public class SecurityConfiguration {
                                 "/auth/register",
                                 "/auth/login",
                                 "/auth/refresh",
-                                "/auth/logout")
+                                "/auth/logout",
+                                "/invitations/**",
+                                "/smtp/**")
                         .permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
@@ -66,8 +68,9 @@ public class SecurityConfiguration {
                 .map(String::trim)
                 .filter(origin -> !origin.isEmpty())
                 .toList());
-        configuration.setAllowedMethods(List.of("GET", "POST", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-CloudForge-Environment", "X-Requested-With", "Accept", "*"));
+        configuration.setExposedHeaders(List.of("Authorization", "X-CloudForge-Environment", "Set-Cookie"));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

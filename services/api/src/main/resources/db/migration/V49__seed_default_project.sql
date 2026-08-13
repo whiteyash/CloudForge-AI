@@ -1,0 +1,1 @@
+-- V44__seed_default_project.sql: Reserved migration slot

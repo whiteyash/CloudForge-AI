@@ -51,4 +51,13 @@ public class ProjectController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(projectService.createProject(principal.userId(), orgId, request));
     }
+
+    @org.springframework.web.bind.annotation.DeleteMapping("/{projectId}")
+    public ResponseEntity<Void> deleteProject(
+            @AuthenticationPrincipal AuthPrincipal principal,
+            @PathVariable UUID orgId,
+            @PathVariable UUID projectId) {
+        projectService.deleteProject(principal.userId(), orgId, projectId);
+        return ResponseEntity.noContent().build();
+    }
 }

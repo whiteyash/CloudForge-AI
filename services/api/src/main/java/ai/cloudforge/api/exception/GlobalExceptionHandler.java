@@ -47,6 +47,21 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+    @ExceptionHandler(ai.cloudforge.api.ai.core.AiProviderNotConfiguredException.class)
+    public ResponseEntity<ErrorResponse> handleAiProviderNotConfigured(ai.cloudforge.api.ai.core.AiProviderNotConfiguredException ex, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(ErrorResponse.of(HttpStatus.SERVICE_UNAVAILABLE.value(), "AI_PROVIDER_NOT_CONFIGURED", ex.getMessage(), request.getRequestURI()));
+    }
+
+    @ExceptionHandler(ai.cloudforge.api.ai.core.AiProviderException.class)
+    public ResponseEntity<ErrorResponse> handleAiProviderError(ai.cloudforge.api.ai.core.AiProviderException ex, HttpServletRequest request) {
+        HttpStatus status = ex.getMessage() != null && ex.getMessage().contains("TIMEOUT") ? HttpStatus.GATEWAY_TIMEOUT : HttpStatus.BAD_GATEWAY;
+        String errorCode = ex.getMessage() != null && ex.getMessage().contains("TIMEOUT") ? "AI_PROVIDER_TIMEOUT"
+                : (ex.getMessage() != null && ex.getMessage().contains("RATE_LIMITED") ? "AI_RATE_LIMITED" : "AI_PROVIDER_ERROR");
+        return ResponseEntity.status(status)
+                .body(ErrorResponse.of(status.value(), errorCode, ex.getMessage(), request.getRequestURI()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneralException(Exception ex, HttpServletRequest request) {
         var responseStatus = org.springframework.core.annotation.AnnotatedElementUtils.findMergedAnnotation(ex.getClass(), org.springframework.web.bind.annotation.ResponseStatus.class);

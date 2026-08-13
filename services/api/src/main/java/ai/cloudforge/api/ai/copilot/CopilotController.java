@@ -34,8 +34,9 @@ public class CopilotController {
             @PathVariable UUID projectId,
             @RequestParam UUID orgId,
             @RequestParam(required = false) UUID conversationId,
+            @org.springframework.web.bind.annotation.RequestHeader(name = "X-CloudForge-Environment", required = false, defaultValue = "DEV") String environment,
             @RequestParam String prompt) {
-        return ResponseEntity.ok(service.processCopilotChat(orgId, principal.userId(), projectId, conversationId, prompt));
+        return ResponseEntity.ok(service.processCopilotChat(orgId, principal.userId(), projectId, conversationId, prompt, environment));
     }
 
     @GetMapping("/projects/{projectId}/copilot/conversations")

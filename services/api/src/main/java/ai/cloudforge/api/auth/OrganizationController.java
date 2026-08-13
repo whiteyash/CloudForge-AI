@@ -28,6 +28,7 @@ public class OrganizationController {
     private final OrganizationRepository organizationRepository;
     private final MembershipRoleHistoryRepository roleHistoryRepository;
     private final AuditLogRepository auditLogRepository;
+    private final ai.cloudforge.api.project.ProjectRepository projectRepository;
 
     public OrganizationController(
             RbacService rbacService,
@@ -35,13 +36,39 @@ public class OrganizationController {
             AppUserRepository userRepository,
             OrganizationRepository organizationRepository,
             MembershipRoleHistoryRepository roleHistoryRepository,
-            AuditLogRepository auditLogRepository) {
+            AuditLogRepository auditLogRepository,
+            ai.cloudforge.api.project.ProjectRepository projectRepository) {
         this.rbacService = rbacService;
         this.membershipRepository = membershipRepository;
         this.userRepository = userRepository;
         this.organizationRepository = organizationRepository;
         this.roleHistoryRepository = roleHistoryRepository;
         this.auditLogRepository = auditLogRepository;
+        this.projectRepository = projectRepository;
+    }
+
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    @GetMapping
+    public ResponseEntity<List<OrgCardResponse>> listUserOrgs(@AuthenticationPrincipal AuthPrincipal principal) {
+        List<Membership> memberships = membershipRepository.findByUserId(principal.userId());
+        List<OrgCardResponse> result = memberships.stream().map(m -> {
+            Organization org = m.getOrganization();
+            long membersCount = membershipRepository.findByOrganizationId(org.getId()).size();
+            long projectsCount = projectRepository.findByOrganizationId(org.getId()).size();
+            return new OrgCardResponse(
+                    org.getId(),
+                    org.getName(),
+                    org.getSlug(),
+                    org.getDescription(),
+                    m.getRole().name(),
+                    membersCount,
+                    projectsCount,
+                    "ENTERPRISE",
+                    org.getStatus(),
+                    org.getCreatedAt()
+            );
+        }).toList();
+        return ResponseEntity.ok(result);
     }
 
     @PostMapping
@@ -333,6 +360,19 @@ public class OrganizationController {
             UUID userId,
             String action,
             String target,
+            Instant createdAt
+    ) {}
+
+    public record OrgCardResponse(
+            UUID id,
+            String name,
+            String slug,
+            String description,
+            String role,
+            long membersCount,
+            long projectsCount,
+            String plan,
+            String status,
             Instant createdAt
     ) {}
 }

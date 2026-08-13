@@ -117,6 +117,40 @@ export const translations: Record<LanguageCode, Record<string, string>> = {
     "System Status": "System Status",
     "Sign Out": "Sign Out",
     "Search workspace...": "Search workspace...",
+    "PROJECTS": "PROJECTS",
+    "MEMBERS": "MEMBERS",
+    "PENDING INVITES": "PENDING INVITES",
+    "TEAMS": "TEAMS",
+    "Active in": "Active in",
+    "Scoped": "Scoped",
+    "Active Engineers": "Active Engineers",
+    "RBAC Enforced": "RBAC Enforced",
+    "Awaiting Acceptance": "Awaiting Acceptance",
+    "Active Token": "Active Token",
+    "Cross-functional": "Cross-functional",
+    "Kubernetes Cluster Health": "Kubernetes Cluster Health",
+    "CI/CD Pipeline Engine": "CI/CD Pipeline Engine",
+    "Security Posture": "Security Posture",
+    "Target Environment": "Target Environment",
+    "Node Status": "Node Status",
+    "Target Release": "Target Release",
+    "Pipeline Status": "Pipeline Status",
+    "Scanner Status": "Scanner Status",
+    "Security Policy": "Security Policy",
+    "Inspect Clusters": "Inspect Clusters",
+    "View Pipelines": "View Pipelines",
+    "Inspect Scans": "Inspect Scans",
+    "Recent Audit Activity": "Recent Audit Activity",
+    "View All Logs": "View All Logs",
+    "Enterprise Projects & Microservices": "Enterprise Projects & Microservices",
+    "New Project": "New Project",
+    "Personal Audit Center & Security Timeline": "Personal Audit Center & Security Timeline",
+    "Private audit stream of personal logins, session switches, and security events for": "Private audit stream of personal logins, session switches, and security events for",
+    "Security Center & Vulnerability Posture": "Security Center & Vulnerability Posture",
+    "Multi-tenant isolation, MFA status, session governance, and container security scanning for": "Multi-tenant isolation, MFA status, session governance, and container security scanning for",
+    "Re-Scan Posture": "Re-Scan Posture",
+    "Active Policy": "Active Policy",
+    "Rapid iteration, feature flags & experimental microservices mesh": "Rapid iteration, feature flags & experimental microservices mesh",
   },
   ja: {
     Overview: "概要",
@@ -136,6 +170,7 @@ export const translations: Record<LanguageCode, Record<string, string>> = {
     "Audit Logs": "監査ログ",
     Settings: "設定",
     "User Experience & Notification Preferences": "ユーザーエクスペリエンスと通知設定",
+    "User Experience & Preferences": "ユーザーエクスペリエンスと環境設定",
     "Interface Personalization": "インターフェースの個人設定",
     "Display Language": "表示言語",
     "User Timezone": "ユーザータイムゾーン",
@@ -218,6 +253,40 @@ export const translations: Record<LanguageCode, Record<string, string>> = {
     "Rotate personal access tokens every 90 days": "90日ごとに個人アクセストークンをローテーションする",
     "Review granted organization RBAC roles quarterly": "四半期ごとに付与された組織のRBACロールを見直す",
     "Enable Multi-Factor Authentication (MFA) when enforced": "強制適用されている場合は多要素認証 (MFA) を有効にする",
+    "PROJECTS": "プロジェクト",
+    "MEMBERS": "メンバー",
+    "PENDING INVITES": "保留中の招待",
+    "TEAMS": "チーム",
+    "Active in": "アクティブ環境:",
+    "Scoped": "スコープ済み",
+    "Active Engineers": "アクティブなエンジニア",
+    "RBAC Enforced": "RBAC適用済み",
+    "Awaiting Acceptance": "承諾待ち",
+    "Active Token": "アクティブなトークン",
+    "Cross-functional": "部門横断的",
+    "Kubernetes Cluster Health": "Kubernetesクラスタの健全性",
+    "CI/CD Pipeline Engine": "CI/CDパイプラインエンジン",
+    "Security Posture": "セキュリティポスチャ",
+    "Target Environment": "ターゲット環境",
+    "Node Status": "ノードステータス",
+    "Target Release": "ターゲットリリース",
+    "Pipeline Status": "パイプラインステータス",
+    "Scanner Status": "スキャナーステータス",
+    "Security Policy": "セキュリティポリシー",
+    "Inspect Clusters": "クラスタを検査",
+    "View Pipelines": "パイプラインを表示",
+    "Inspect Scans": "スキャンを検査",
+    "Recent Audit Activity": "最近の監査アクティビティ",
+    "View All Logs": "すべてのログを表示",
+    "Enterprise Projects & Microservices": "エンタープライズプロジェクトとマイクロサービス",
+    "New Project": "新規プロジェクト",
+    "Personal Audit Center & Security Timeline": "個人監査センターとセキュリティタイムライン",
+    "Private audit stream of personal logins, session switches, and security events for": "個人ログイン、セッション切り替え、セキュリティイベントのプライベート監査ストリーム:",
+    "Security Center & Vulnerability Posture": "セキュリティセンターと脆弱性ポスチャ",
+    "Multi-tenant isolation, MFA status, session governance, and container security scanning for": "マルチテナント分離、MFAステータス、セッションガバナンス、コンテナセキュリティスキャン:",
+    "Re-Scan Posture": "ポスチャを再スキャン",
+    "Active Policy": "アクティブポリシー",
+    "Rapid iteration, feature flags & experimental microservices mesh": "高速なイテレーション、フィーチャーフラグ、実験的マイクロサービスメッシュ",
     "days": "日",
     "devices": "デバイス",
     "attempts": "回",
@@ -494,49 +563,82 @@ export const translations: Record<LanguageCode, Record<string, string>> = {
 interface LanguageContextType {
   language: LanguageCode;
   setLanguage: (lang: LanguageCode) => void;
+  timezone: string;
+  setTimezone: (tz: string) => void;
   t: (key: string) => string;
+  formatDateTime: (dateInput: string | Date | number, customTz?: string) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType>({
   language: "en",
   setLanguage: () => {},
+  timezone: "Asia/Kolkata",
+  setTimezone: () => {},
   t: (key: string) => key,
+  formatDateTime: (dateInput) => String(dateInput),
 });
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<LanguageCode>("en");
+  const [timezone, setTimezoneState] = useState<string>("Asia/Kolkata");
 
   useEffect(() => {
-    const syncLanguage = () => {
+    const syncSettings = () => {
       try {
         const stored = localStorage.getItem("cf_app_language");
         if (stored && (stored === "en" || stored === "es" || stored === "ja" || stored === "de" || stored === "fr")) {
           setLanguageState(stored as LanguageCode);
-          return;
+        } else {
+          const prefsStored = localStorage.getItem("cf_user_preferences");
+          if (prefsStored) {
+            const parsed = JSON.parse(prefsStored);
+            if (parsed?.language && (parsed.language === "en" || parsed.language === "es" || parsed.language === "ja" || parsed.language === "de" || parsed.language === "fr")) {
+              setLanguageState(parsed.language as LanguageCode);
+            }
+          }
         }
 
-        const prefsStored = localStorage.getItem("cf_user_preferences");
-        if (prefsStored) {
-          const parsed = JSON.parse(prefsStored);
-          if (parsed?.language && (parsed.language === "en" || parsed.language === "es" || parsed.language === "ja" || parsed.language === "de" || parsed.language === "fr")) {
-            setLanguageState(parsed.language as LanguageCode);
+        const tzStored = localStorage.getItem("cf_app_timezone");
+        if (tzStored) {
+          setTimezoneState(tzStored);
+        } else {
+          const prefsStored = localStorage.getItem("cf_user_preferences");
+          if (prefsStored) {
+            const parsed = JSON.parse(prefsStored);
+            if (parsed?.timezone) setTimezoneState(parsed.timezone);
           }
+        }
+
+        const densityStored = localStorage.getItem("cf_app_density");
+        if (densityStored) {
+          const d = densityStored.toLowerCase() === "compact" ? "compact" : "comfortable";
+          document.documentElement.setAttribute("data-density", d);
         }
       } catch {
         // Storage read fallback
       }
     };
 
-    syncLanguage();
+    syncSettings();
 
-    window.addEventListener("storage", syncLanguage);
-    return () => window.removeEventListener("storage", syncLanguage);
+    window.addEventListener("storage", syncSettings);
+    return () => window.removeEventListener("storage", syncSettings);
   }, []);
 
   const setLanguage = (lang: LanguageCode) => {
     setLanguageState(lang);
     try {
       localStorage.setItem("cf_app_language", lang);
+      window.dispatchEvent(new Event("storage"));
+    } catch {
+      // Storage write fallback
+    }
+  };
+
+  const setTimezone = (tz: string) => {
+    setTimezoneState(tz);
+    try {
+      localStorage.setItem("cf_app_timezone", tz);
       window.dispatchEvent(new Event("storage"));
     } catch {
       // Storage write fallback
@@ -552,8 +654,12 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     return key;
   };
 
+  const formatBoundDateTime = (dateInput: string | Date | number, customTz?: string): string => {
+    return formatDateTime(dateInput, customTz || timezone);
+  };
+
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={{ language, setLanguage, timezone, setTimezone, t, formatDateTime: formatBoundDateTime }}>
       {children}
     </LanguageContext.Provider>
   );
@@ -561,4 +667,51 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
 export function useLanguage() {
   return useContext(LanguageContext);
+}
+
+export function formatDateTime(dateInput: string | Date | number, customTimezone?: string): string {
+  if (!dateInput) return "";
+  const date = new Date(dateInput);
+  if (isNaN(date.getTime())) return String(dateInput);
+
+  let tz = customTimezone;
+  if (!tz && typeof window !== "undefined") {
+    tz = localStorage.getItem("cf_app_timezone") || undefined;
+    if (!tz) {
+      try {
+        const prefs = localStorage.getItem("cf_user_preferences");
+        if (prefs) {
+          const parsed = JSON.parse(prefs);
+          if (parsed?.timezone) tz = parsed.timezone;
+        }
+      } catch {}
+    }
+  }
+  if (!tz) tz = "Asia/Kolkata";
+
+  let tzAbbr = tz;
+  if (tz === "Asia/Kolkata") tzAbbr = "IST";
+  else if (tz === "Asia/Tokyo") tzAbbr = "JST";
+  else if (tz === "America/New_York") tzAbbr = "EST";
+  else if (tz === "Europe/London") tzAbbr = "GMT";
+  else if (tz === "UTC") tzAbbr = "UTC";
+  else if (tz === "Europe/Berlin") tzAbbr = "CET";
+  else if (tz === "Asia/Singapore") tzAbbr = "SGT";
+  else if (tz === "Australia/Sydney") tzAbbr = "AEST";
+
+  try {
+    const formatted = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    }).format(date);
+    return `${formatted} ${tzAbbr}`;
+  } catch {
+    return date.toLocaleString();
+  }
 }

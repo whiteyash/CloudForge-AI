@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import ai.cloudforge.api.ai.core.ContextBuilder;
+import ai.cloudforge.api.project.ProjectRepository;
 
 class ContextAggregationServiceTest {
 
@@ -14,13 +14,12 @@ class ContextAggregationServiceTest {
 
     @BeforeEach
     void setUp() {
-        ContextBuilder contextBuilder = new ContextBuilder();
-        aggregationService = new ContextAggregationService(contextBuilder);
+        aggregationService = new ContextAggregationService((ProjectRepository) null, null, null, null);
     }
 
     @Test
     void testAggregateOperationalContext() {
-        ContextAggregationService.UnifiedContext context = aggregationService.aggregateOperationalContext(UUID.randomUUID(), UUID.randomUUID());
+        ContextAggregationService.UnifiedContext context = aggregationService.aggregateOperationalContext(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), "DEV");
         assertNotNull(context);
         assertNotNull(context.environmentHealth());
     }

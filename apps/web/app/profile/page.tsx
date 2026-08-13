@@ -5,8 +5,11 @@ import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
 import { User, Lock, Save, Key, CheckCircle2, AlertCircle } from "lucide-react";
 import { api, UserProfileResponse } from "@/lib/api";
+import { useEnvironment } from "@/context/EnvironmentContext";
+import CloudControlBackground from "@/components/dashboard/CloudControlBackground";
 
 export default function ProfilePage() {
+  const { environment, environmentConfig } = useEnvironment();
   const [profile, setProfile] = useState<UserProfileResponse | null>(null);
   const [fullName, setFullName] = useState("");
   const [oldPassword, setOldPassword] = useState("");
@@ -78,33 +81,51 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="flex h-screen bg-[#0A1020] text-[#E7EDF7] overflow-hidden">
+    <div className="flex h-screen bg-[#060A14] text-[#E7EDF7] overflow-hidden relative font-sans">
+      <div className="fixed inset-0 w-full h-full z-0 opacity-40 pointer-events-auto">
+        <CloudControlBackground />
+      </div>
+
       <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10">
         <Header userFullName={fullName || "Platform Engineer"} />
 
-        <main className="flex-1 overflow-y-auto p-6 space-y-6 max-w-5xl mx-auto w-full">
-          <div>
-            <h1 className="text-2xl font-heading font-bold text-[#E7EDF7]">Account & Security Profile</h1>
-            <p className="text-xs text-[#8B99B8] mt-1">Manage your identity credentials, active session security, and account preferences</p>
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 max-w-5xl mx-auto w-full">
+          {/* Header Banner */}
+          <div className="p-6 rounded-3xl bg-[#050F25]/75 backdrop-blur-2xl border border-[#3DD9C4]/40 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-[0_0_50px_rgba(61,217,196,0.15)]">
+            <div>
+              <div className="flex items-center gap-2.5 mb-1 flex-wrap">
+                <h1 className="text-xl sm:text-2xl font-heading font-extrabold text-[#E7EDF7] tracking-tight">
+                  Account & Security Profile
+                </h1>
+                <span className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full uppercase font-bold border ${environmentConfig.badgeBg} ${environmentConfig.badgeText} ${environmentConfig.badgeBorder}`}>
+                  ENV: {environmentConfig.label}
+                </span>
+              </div>
+              <p className="text-xs text-[#8B99B8]">
+                Identity credentials, active session security, and account preferences for <strong className="text-[#3DD9C4] font-mono">{environment.toUpperCase()}</strong> context
+              </p>
+            </div>
           </div>
 
           {error && (
-            <div className="p-4 rounded-xl bg-[#F87171]/10 border border-[#F87171]/30 text-[#F87171] text-xs flex items-center gap-2">
+            <div className="p-4 rounded-xl bg-[#F87171]/15 border border-[#F87171]/40 text-[#F87171] text-xs flex items-center gap-2 font-mono">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
           {/* Personal Information */}
-          <div className="p-6 rounded-2xl bg-[#111B2E] border border-[#22314D] shadow-lg">
-            <div className="flex items-center gap-2 pb-4 border-b border-[#22314D] mb-6">
-              <User className="w-5 h-5 text-[#3DD9C4]" />
+          <div className="p-6 rounded-2xl bg-[#050F25]/60 backdrop-blur-2xl border border-[#22314D] hover:border-[#3DD9C4]/40 shadow-[0_0_30px_rgba(61,217,196,0.08)] transition-all">
+            <div className="flex items-center gap-2.5 pb-4 border-b border-[#22314D]/60 mb-6">
+              <div className="p-2 rounded-xl bg-[#3DD9C4]/15 border border-[#3DD9C4]/30 text-[#3DD9C4]">
+                <User className="w-5 h-5" />
+              </div>
               <h2 className="text-base font-heading font-bold text-[#E7EDF7]">Personal Details</h2>
             </div>
 
             {profileMessage && (
-              <div className="mb-4 p-3 rounded-lg bg-[#34D399]/10 border border-[#34D399]/30 text-[#34D399] text-xs flex items-center gap-2">
+              <div className="mb-4 p-3 rounded-lg bg-[#34D399]/15 border border-[#34D399]/40 text-[#34D399] text-xs flex items-center gap-2 font-mono">
                 <CheckCircle2 className="w-4 h-4" />
                 <span>{profileMessage}</span>
               </div>
@@ -118,7 +139,7 @@ export default function ProfilePage() {
                     type="text"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="w-full bg-[#0A1020] border border-[#22314D] rounded-xl px-4 py-2.5 text-sm text-[#E7EDF7] focus:outline-none focus:border-[#3DD9C4]"
+                    className="w-full bg-[#0A1020]/80 border border-[#22314D] rounded-xl px-4 py-2.5 text-sm text-[#E7EDF7] focus:outline-none focus:border-[#3DD9C4] transition-all"
                   />
                 </div>
                 <div>
@@ -127,7 +148,7 @@ export default function ProfilePage() {
                     type="email"
                     disabled
                     value={profile?.email || "admin@cloudforge.ai"}
-                    className="w-full bg-[#0A1020]/60 border border-[#22314D] rounded-xl px-4 py-2.5 text-sm text-[#8B99B8] cursor-not-allowed font-mono"
+                    className="w-full bg-[#0A1020]/40 border border-[#22314D] rounded-xl px-4 py-2.5 text-sm text-[#8B99B8] cursor-not-allowed font-mono"
                   />
                 </div>
               </div>
@@ -135,9 +156,9 @@ export default function ProfilePage() {
               <div className="flex justify-end pt-2">
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-[#3DD9C4] text-[#0A1020] font-heading font-semibold text-xs hover:bg-[#34D399] transition-all flex items-center gap-1.5"
+                  className="px-4 py-2.5 rounded-xl bg-[#3DD9C4] text-[#0A1020] font-heading font-extrabold text-xs hover:bg-[#34D399] transition-all shadow-[0_0_16px_rgba(61,217,196,0.3)] flex items-center gap-1.5 cursor-pointer"
                 >
-                  <Save className="w-4 h-4" />
+                  <Save className="w-4 h-4 stroke-[2.5]" />
                   Save Changes
                 </button>
               </div>
@@ -145,14 +166,16 @@ export default function ProfilePage() {
           </div>
 
           {/* Change Password */}
-          <div className="p-6 rounded-2xl bg-[#111B2E] border border-[#22314D] shadow-lg">
-            <div className="flex items-center gap-2 pb-4 border-b border-[#22314D] mb-6">
-              <Lock className="w-5 h-5 text-[#3DD9C4]" />
+          <div className="p-6 rounded-2xl bg-[#050F25]/60 backdrop-blur-2xl border border-[#22314D] hover:border-[#3DD9C4]/40 shadow-[0_0_30px_rgba(61,217,196,0.08)] transition-all">
+            <div className="flex items-center gap-2.5 pb-4 border-b border-[#22314D]/60 mb-6">
+              <div className="p-2 rounded-xl bg-[#3DD9C4]/15 border border-[#3DD9C4]/30 text-[#3DD9C4]">
+                <Lock className="w-5 h-5" />
+              </div>
               <h2 className="text-base font-heading font-bold text-[#E7EDF7]">Security & Credentials</h2>
             </div>
 
             {passwordMessage && (
-              <div className="mb-4 p-3 rounded-lg bg-[#34D399]/10 border border-[#34D399]/30 text-[#34D399] text-xs flex items-center gap-2">
+              <div className="mb-4 p-3 rounded-lg bg-[#34D399]/15 border border-[#34D399]/40 text-[#34D399] text-xs flex items-center gap-2 font-mono">
                 <CheckCircle2 className="w-4 h-4" />
                 <span>{passwordMessage}</span>
               </div>
@@ -166,7 +189,7 @@ export default function ProfilePage() {
                   required
                   value={oldPassword}
                   onChange={(e) => setOldPassword(e.target.value)}
-                  className="w-full bg-[#0A1020] border border-[#22314D] rounded-xl px-4 py-2.5 text-sm text-[#E7EDF7] focus:outline-none focus:border-[#3DD9C4]"
+                  className="w-full bg-[#0A1020]/80 border border-[#22314D] rounded-xl px-4 py-2.5 text-sm text-[#E7EDF7] focus:outline-none focus:border-[#3DD9C4] transition-all"
                 />
               </div>
 
@@ -179,7 +202,7 @@ export default function ProfilePage() {
                     minLength={8}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full bg-[#0A1020] border border-[#22314D] rounded-xl px-4 py-2.5 text-sm text-[#E7EDF7] focus:outline-none focus:border-[#3DD9C4]"
+                    className="w-full bg-[#0A1020]/80 border border-[#22314D] rounded-xl px-4 py-2.5 text-sm text-[#E7EDF7] focus:outline-none focus:border-[#3DD9C4] transition-all"
                   />
                 </div>
                 <div>
@@ -189,7 +212,7 @@ export default function ProfilePage() {
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full bg-[#0A1020] border border-[#22314D] rounded-xl px-4 py-2.5 text-sm text-[#E7EDF7] focus:outline-none focus:border-[#3DD9C4]"
+                    className="w-full bg-[#0A1020]/80 border border-[#22314D] rounded-xl px-4 py-2.5 text-sm text-[#E7EDF7] focus:outline-none focus:border-[#3DD9C4] transition-all"
                   />
                 </div>
               </div>
@@ -197,7 +220,7 @@ export default function ProfilePage() {
               <div className="flex justify-end pt-2">
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-[#16233A] border border-[#3DD9C4]/40 text-[#3DD9C4] font-heading font-semibold text-xs hover:bg-[#3DD9C4] hover:text-[#0A1020] transition-all flex items-center gap-1.5"
+                  className="px-4 py-2.5 rounded-xl bg-[#0A1020] border border-[#3DD9C4]/40 text-[#3DD9C4] font-heading font-extrabold text-xs hover:bg-[#3DD9C4] hover:text-[#0A1020] transition-all flex items-center gap-1.5 cursor-pointer shadow-[0_0_12px_rgba(61,217,196,0.2)]"
                 >
                   <Key className="w-4 h-4" />
                   Update Password

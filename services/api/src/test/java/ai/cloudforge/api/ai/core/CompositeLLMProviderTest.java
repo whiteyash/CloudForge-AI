@@ -12,10 +12,8 @@ class CompositeLLMProviderTest {
 
     @BeforeEach
     void setUp() {
-        ObjectMapper objectMapper = new ObjectMapper();
-        RealLLMProvider realLLMProvider = new RealLLMProvider(objectMapper);
         MockLLMProvider mockLLMProvider = new MockLLMProvider();
-        compositeLLMProvider = new CompositeLLMProvider(realLLMProvider, mockLLMProvider);
+        compositeLLMProvider = new CompositeLLMProvider(mockLLMProvider);
     }
 
     @Test

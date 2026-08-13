@@ -15,16 +15,19 @@ public class SecurityCenterService {
     private final ActiveSessionRepository activeSessionRepository;
     private final LoginAttemptRepository loginAttemptRepository;
     private final FavoriteWorkspaceRepository favoriteWorkspaceRepository;
+    private final ai.cloudforge.api.aiops.IncidentRepository incidentRepository;
 
     public SecurityCenterService(
             AppUserRepository userRepository,
             ActiveSessionRepository activeSessionRepository,
             LoginAttemptRepository loginAttemptRepository,
-            FavoriteWorkspaceRepository favoriteWorkspaceRepository) {
+            FavoriteWorkspaceRepository favoriteWorkspaceRepository,
+            ai.cloudforge.api.aiops.IncidentRepository incidentRepository) {
         this.userRepository = userRepository;
         this.activeSessionRepository = activeSessionRepository;
         this.loginAttemptRepository = loginAttemptRepository;
         this.favoriteWorkspaceRepository = favoriteWorkspaceRepository;
+        this.incidentRepository = incidentRepository;
     }
 
     @Transactional(readOnly = true)
@@ -35,10 +38,15 @@ public class SecurityCenterService {
         long activeSessionsCount = activeSessionRepository.findByUserIdOrderByLastActiveAtDesc(userId).size();
         long passwordAgeDays = Duration.between(user.getCreatedAt(), Instant.now()).toDays();
         long recentFailedAttempts = loginAttemptRepository.countByEmailAndSuccessFalse(user.getEmail());
+        long openIncidentsCount = incidentRepository.findAll().stream()
+                .filter(inc -> !"RESOLVED".equalsIgnoreCase(inc.getStatus()) && !"CLOSED".equalsIgnoreCase(inc.getStatus()))
+                .count();
 
-        int securityScore = 85;
-        if (passwordAgeDays < 90) securityScore += 10;
-        if (recentFailedAttempts == 0) securityScore += 5;
+        int securityScore = 100;
+        if (passwordAgeDays >= 90) securityScore -= 10;
+        if (recentFailedAttempts > 0) securityScore -= 10;
+        if (openIncidentsCount > 0) securityScore -= (int) (openIncidentsCount * 15);
+        securityScore = Math.max(0, Math.min(100, securityScore));
 
         return new SecurityOverviewResponse(
                 user.getId(),

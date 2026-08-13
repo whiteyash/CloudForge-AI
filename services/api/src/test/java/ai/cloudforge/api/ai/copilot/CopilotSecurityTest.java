@@ -37,7 +37,7 @@ class CopilotSecurityTest {
         ConversationManager conversationManager = new ConversationManager();
 
         IntentRouter intentRouter = new IntentRouter(intentResolver);
-        ContextAggregationService contextAggregationService = new ContextAggregationService(contextBuilder);
+        ContextAggregationService contextAggregationService = new ContextAggregationService((ai.cloudforge.api.project.ProjectRepository) null, null, null, null);
         ConversationOrchestrator conversationOrchestrator = new ConversationOrchestrator(conversationManager);
 
         service = new CopilotService(

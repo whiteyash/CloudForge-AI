@@ -12,7 +12,7 @@ interface PermissionGuardProps {
 
 export default function PermissionGuard({
   permission,
-  orgId = "default-org-id",
+  orgId,
   fallback = null,
   children,
 }: PermissionGuardProps) {

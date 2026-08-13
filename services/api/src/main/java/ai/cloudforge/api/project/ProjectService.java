@@ -73,4 +73,13 @@ public class ProjectService {
 
         return ProjectResponse.fromEntity(project);
     }
+
+    @Transactional
+    public void deleteProject(UUID userId, UUID orgId, UUID projectId) {
+        rbacService.requireMutatingPermission(userId, orgId);
+        Project project = projectRepository.findByIdAndOrganizationId(projectId, orgId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found in organization"));
+        projectRepository.delete(project);
+        auditLogRepository.save(new AuditLog(orgId, userId, "project.deleted", project.getName()));
+    }
 }

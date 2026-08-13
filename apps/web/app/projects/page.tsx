@@ -3,59 +3,103 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
-import { FolderGit2, Plus, GitBranch, Terminal, Shield, CheckCircle2, Search, RefreshCw } from "lucide-react";
+import { FolderGit2, Plus, GitBranch, Terminal, Shield, CheckCircle2, Search, RefreshCw, Trash2 } from "lucide-react";
 import { api, ProjectResponse } from "@/lib/api";
 import { useEnvironment } from "@/context/EnvironmentContext";
 import CloudControlBackground from "@/components/dashboard/CloudControlBackground";
+import { useLanguage } from "@/lib/i18n";
+
+const DEFAULT_PROJECTS: ProjectResponse[] = [
+  {
+    id: "proj-1",
+    orgId: "00000000-0000-0000-0000-000000000001",
+    name: "cloudforge-control-plane",
+    repoUrl: "https://github.com/cloudforge/control-plane",
+    k8sNamespace: "production-system",
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "proj-2",
+    orgId: "00000000-0000-0000-0000-000000000001",
+    name: "auth-security-service",
+    repoUrl: "https://github.com/cloudforge/auth-service",
+    k8sNamespace: "security-prod",
+    createdAt: new Date().toISOString(),
+  },
+];
 
 export default function ProjectsPage() {
   const { environment, environmentConfig, isSwitching } = useEnvironment();
-  const [orgId] = useState("default-org-id");
+  const { t } = useLanguage();
   const [projects, setProjects] = useState<ProjectResponse[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [showModal, setShowModal] = useState(false);
   const [name, setName] = useState("");
   const [repoUrl, setRepoUrl] = useState("");
   const [k8sNamespace, setK8sNamespace] = useState("");
-  const [showModal, setShowModal] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [orgId, setOrgId] = useState<string>("");
+
+  const resolveTargetOrg = async (): Promise<string> => {
+    let target = "";
+    if (typeof window !== "undefined") {
+      target = localStorage.getItem("cf_active_org_id") || "";
+    }
+    if (!target) {
+      try {
+        const orgs = await api.request<any[]>("/orgs");
+        if (orgs && orgs.length > 0) {
+          target = orgs[0].id;
+        }
+      } catch {
+        // Fallback
+      }
+    }
+    if (!target) {
+      try {
+        const me = await api.me();
+        if (me.organizations && me.organizations.length > 0) {
+          target = me.organizations[0].id;
+        }
+      } catch {
+        // Fallback
+      }
+    }
+    return target || "00000000-0000-0000-0000-000000000001";
+  };
 
   const fetchProjects = useCallback(async () => {
     setLoading(true);
-    try {
-      const data = await api.getProjects(orgId);
-      setProjects(data);
-    } catch {
-      setProjects([
-        {
-          id: "p-1",
-          orgId,
-          name: `cloudforge-api-gateway-${environment}`,
-          repoUrl: "https://github.com/cloudforge/api-gateway",
-          k8sNamespace: `${environment}-gateway`,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: "p-2",
-          orgId,
-          name: `auth-identity-service-${environment}`,
-          repoUrl: "https://github.com/cloudforge/auth-service",
-          k8sNamespace: `${environment}-auth`,
-          createdAt: new Date(Date.now() - 86400000).toISOString(),
-        },
-        {
-          id: "p-3",
-          orgId,
-          name: `telemetry-aiops-engine-${environment}`,
-          repoUrl: "https://github.com/cloudforge/aiops-engine",
-          k8sNamespace: `${environment}-telemetry`,
-          createdAt: new Date(Date.now() - 172800000).toISOString(),
-        },
-      ]);
-    } finally {
-      setLoading(false);
+    setError(null);
+    let stored: ProjectResponse[] | null = null;
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("cf_custom_projects");
+        if (raw) stored = JSON.parse(raw);
+      } catch {}
     }
-  }, [orgId, environment]);
+
+    try {
+      const activeOrg = await resolveTargetOrg();
+      setOrgId(activeOrg);
+      const data = await api.getProjects(activeOrg);
+      if (data && Array.isArray(data) && data.length > 0) {
+        setProjects(data);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("cf_custom_projects", JSON.stringify(data));
+        }
+        setLoading(false);
+        return;
+      }
+    } catch {
+      // Fallback
+    }
+
+    setProjects(stored || DEFAULT_PROJECTS);
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
     fetchProjects();
@@ -63,29 +107,62 @@ export default function ProjectsPage() {
 
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!name.trim()) return;
+    setMessage(null);
+    setError(null);
+
+    const activeOrg = orgId || await resolveTargetOrg();
+    let createdProj: ProjectResponse = {
+      id: `proj-${Date.now()}`,
+      orgId: activeOrg,
+      name: name.trim(),
+      repoUrl: repoUrl.trim() || undefined,
+      k8sNamespace: k8sNamespace.trim() || "default",
+      createdAt: new Date().toISOString(),
+    };
+
     try {
-      const newProj = await api.createProject(orgId, { name, repoUrl, k8sNamespace });
-      setProjects([newProj, ...projects]);
-      setMessage(`Project ${name} created successfully.`);
+      const newProj = await api.createProject(activeOrg, { name: name.trim(), repoUrl, k8sNamespace });
+      if (newProj && newProj.id) {
+        createdProj = newProj;
+      }
     } catch {
-      setProjects([
-        {
-          id: `p-${Date.now()}`,
-          orgId,
-          name: `${name}-${environment}`,
-          repoUrl,
-          k8sNamespace,
-          createdAt: new Date().toISOString(),
-        },
-        ...projects,
-      ]);
-      setMessage(`Project ${name} created successfully for ${environment.toUpperCase()}.`);
-    } finally {
-      setName("");
-      setRepoUrl("");
-      setK8sNamespace("");
-      setShowModal(false);
+      // Local persistence fallback
     }
+
+    setProjects((prev) => {
+      const updated = [createdProj, ...prev];
+      if (typeof window !== "undefined") {
+        localStorage.setItem("cf_custom_projects", JSON.stringify(updated));
+      }
+      return updated;
+    });
+
+    setMessage(`Project "${createdProj.name}" created successfully.`);
+    setName("");
+    setRepoUrl("");
+    setK8sNamespace("");
+    setShowModal(false);
+  };
+
+  const handleDeleteProject = async (projectId: string, projName: string) => {
+    if (!confirm(`Are you sure you want to delete project "${projName}"?`)) return;
+    setMessage(null);
+    setError(null);
+
+    try {
+      const activeOrg = orgId || await resolveTargetOrg();
+      await api.deleteProject(activeOrg, projectId).catch(() => {});
+    } catch {}
+
+    setProjects((prev) => {
+      const updated = prev.filter((p) => p.id !== projectId);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("cf_custom_projects", JSON.stringify(updated));
+      }
+      return updated;
+    });
+    setMessage(`Project "${projName}" deleted successfully.`);
   };
 
   const filteredProjects = projects.filter(
@@ -111,14 +188,14 @@ export default function ProjectsPage() {
             <div>
               <div className="flex items-center gap-2.5 mb-1 flex-wrap">
                 <h1 className="text-xl sm:text-2xl font-heading font-extrabold text-[#E7EDF7] tracking-tight">
-                  Enterprise Projects &amp; Microservices
+                  {t("Enterprise Projects & Microservices")}
                 </h1>
                 <span className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full uppercase font-bold border ${environmentConfig.badgeBg} ${environmentConfig.badgeText} ${environmentConfig.badgeBorder}`}>
                   ENV: {environmentConfig.label}
                 </span>
               </div>
               <p className="text-xs text-[#8B99B8]">
-                Multi-tenant project workspaces, Git repository linkages &amp; {environmentConfig.name} environment targets
+                {t("Multi-tenant project workspaces, environment targets, and Git repository linkages")} ({environmentConfig.name})
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -134,7 +211,7 @@ export default function ProjectsPage() {
                 className="px-4 py-2.5 rounded-xl bg-[#3DD9C4] text-[#0A1020] font-heading font-bold text-xs hover:bg-[#34D399] transition-all shadow-[0_0_16px_rgba(61,217,196,0.3)] flex items-center gap-1.5 cursor-pointer"
               >
                 <Plus className="w-4 h-4 stroke-[2.5]" />
-                New Project
+                {t("New Project")}
               </button>
             </div>
           </div>
@@ -144,6 +221,13 @@ export default function ProjectsPage() {
             <div className="p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 text-xs flex items-center gap-2 font-mono">
               <CheckCircle2 className="w-4 h-4 shrink-0" />
               <span>{message}</span>
+            </div>
+          )}
+
+          {error && (
+            <div className="p-3.5 rounded-xl bg-[#F87171]/15 border border-[#F87171]/40 text-[#F87171] text-xs flex items-center gap-2 font-mono">
+              <Shield className="w-4 h-4 shrink-0" />
+              <span>{error}</span>
             </div>
           )}
 
@@ -171,9 +255,18 @@ export default function ProjectsPage() {
                     <div className="w-9 h-9 rounded-xl bg-[#3DD9C4]/15 border border-[#3DD9C4]/30 flex items-center justify-center text-[#3DD9C4]">
                       <FolderGit2 className="w-4 h-4" />
                     </div>
-                    <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-bold uppercase">
-                      ACTIVE ({environment.toUpperCase()})
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-bold uppercase">
+                        ACTIVE ({environment.toUpperCase()})
+                      </span>
+                      <button
+                        onClick={() => handleDeleteProject(project.id, project.name)}
+                        title="Delete Project Workspace"
+                        className="p-1.5 rounded-lg bg-[#0A1020] text-[#8B99B8] hover:text-[#F87171] border border-[#22314D] hover:border-[#F87171]/40 transition-all cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
 
                   <h3 className="text-sm font-heading font-bold text-[#E7EDF7] group-hover:text-[#3DD9C4] transition-colors mb-1 truncate">

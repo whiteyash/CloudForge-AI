@@ -32,6 +32,9 @@ public class TeamMembership {
     @JoinColumn(name = "user_id", nullable = false)
     private AppUser user;
 
+    @Column(length = 40)
+    private String role = "MEMBER";
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -39,8 +42,13 @@ public class TeamMembership {
     }
 
     public TeamMembership(Team team, AppUser user) {
+        this(team, user, "MEMBER");
+    }
+
+    public TeamMembership(Team team, AppUser user, String role) {
         this.team = team;
         this.user = user;
+        this.role = role != null ? role : "MEMBER";
     }
 
     @PrePersist
@@ -60,6 +68,14 @@ public class TeamMembership {
 
     public AppUser getUser() {
         return user;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 
     public Instant getCreatedAt() {

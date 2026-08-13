@@ -83,3 +83,53 @@ code, pre, .font-mono {
   background: linear-gradient(180deg, transparent 0%, var(--cf-signal) 50%, transparent 100%);
   animation: signalPulse 3s ease-in-out infinite;
 }
+
+/* Compact Layout Density Mode */
+[data-density="compact"] main {
+  padding: 0.75rem !important;
+}
+
+[data-density="compact"] .p-6 {
+  padding: 0.875rem !important;
+}
+
+[data-density="compact"] .p-5 {
+  padding: 0.65rem !important;
+}
+
+[data-density="compact"] .p-4 {
+  padding: 0.5rem !important;
+}
+
+[data-density="compact"] .py-4 {
+  padding-top: 0.375rem !important;
+  padding-bottom: 0.375rem !important;
+}
+
+[data-density="compact"] .py-3,
+[data-density="compact"] [class*="py-3.5"] {
+  padding-top: 0.25rem !important;
+  padding-bottom: 0.25rem !important;
+}
+
+[data-density="compact"] td,
+[data-density="compact"] th {
+  padding-top: 0.35rem !important;
+  padding-bottom: 0.35rem !important;
+}
+
+[data-density="compact"] .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.75rem !important;
+}
+
+[data-density="compact"] .space-y-4 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.5rem !important;
+}
+
+[data-density="compact"] .gap-6 {
+  gap: 0.75rem !important;
+}
+
+[data-density="compact"] .gap-4 {
+  gap: 0.5rem !important;
+}

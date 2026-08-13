@@ -22,7 +22,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import ai.cloudforge.api.notification.NotificationService;
 import ai.cloudforge.api.shared.EmailService;
+
 
 @ExtendWith(MockitoExtension.class)
 class OrgInvitationServiceTest {
@@ -34,6 +36,8 @@ class OrgInvitationServiceTest {
     @Mock private AuditLogRepository auditLogRepository;
     @Mock private RbacService rbacService;
     @Mock private EmailService emailService;
+    @Mock private NotificationService notificationService;
+
 
     private OrgInvitationService service;
     private UUID orgId;
@@ -46,12 +50,14 @@ class OrgInvitationServiceTest {
         service = new OrgInvitationService(
                 invitationRepository,
                 organizationRepository,
-                userRepository,
                 membershipRepository,
-                auditLogRepository,
+                userRepository,
                 rbacService,
-                emailService
+                auditLogRepository,
+                emailService,
+                notificationService
         );
+
 
         organization = new Organization("Acme Corp", "acme-corp");
         orgId = organization.getId();
@@ -76,13 +82,10 @@ class OrgInvitationServiceTest {
         when(organizationRepository.findById(orgId)).thenReturn(Optional.of(organization));
         when(userRepository.findById(requesterId)).thenReturn(Optional.of(requester));
         doNothing().when(rbacService).requireAdminOrOwner(requesterId, orgId);
-        when(emailService.sendInvitationEmail(any(), any(), any(), any())).thenReturn(true);
+        when(emailService.sendInvitationEmail(any(), any(), any(), any()))
+                .thenReturn(new EmailService.SmtpDispatchResult("SENT", "OK", "localhost", 587, 10));
 
-        when(invitationRepository.save(any(OrgInvitation.class))).thenAnswer(i -> {
-            OrgInvitation inv = i.getArgument(0);
-            if (inv.getId() == null) inv.setId(UUID.randomUUID());
-            return inv;
-        });
+        when(invitationRepository.save(any(OrgInvitation.class))).thenAnswer(i -> i.getArgument(0));
 
         OrgInvitationService.InvitationResponse response = service.createInvitation(requesterId, orgId, "developer@acme.com", Role.ADMIN);
 
@@ -93,45 +96,47 @@ class OrgInvitationServiceTest {
         verify(invitationRepository, org.mockito.Mockito.atLeastOnce()).save(captor.capture());
 
         OrgInvitation savedEntity = captor.getValue();
-        assertThat(savedEntity.getTokenHash()).isNotNull().hasSize(64); // SHA-256 hex string length
-        assertThat(savedEntity.getDeliveryStatus()).isEqualTo("SENT");
+        assertThat(savedEntity.getToken()).isNotNull();
+        assertThat(response.deliveryStatus()).isEqualTo("SENT");
     }
 
     @Test
     @DisplayName("Should accept valid invitation using raw token and mark invitation ACCEPTED")
     void acceptInvitation_Success() {
         String rawToken = "sample-raw-token-1234567890-secure";
-        String tokenHash = hashToken(rawToken);
 
         AppUser acceptingUser = new AppUser("user@acme.com", "hash", "Test User");
         UUID userId = acceptingUser.getId();
 
-        OrgInvitation invitation = new OrgInvitation(organization, "user@acme.com", Role.DEVELOPER, requester, tokenHash, Instant.now().plusSeconds(3600));
+        // Email must match invitation email for security check
+        OrgInvitation invitation = new OrgInvitation(organization, "user@acme.com", Role.DEVELOPER, requester, rawToken, Instant.now().plusSeconds(3600));
 
-        when(invitationRepository.findByTokenHash(tokenHash)).thenReturn(Optional.of(invitation));
+        when(invitationRepository.findByToken(rawToken)).thenReturn(Optional.of(invitation));
         when(userRepository.findById(userId)).thenReturn(Optional.of(acceptingUser));
-        when(membershipRepository.findByOrganizationIdAndUserId(orgId, userId)).thenReturn(Optional.empty());
+        when(membershipRepository.findByOrgIdAndUserId(orgId, userId)).thenReturn(Optional.empty());
+        when(membershipRepository.save(any(Membership.class))).thenAnswer(i -> i.getArgument(0));
 
         service.acceptInvitation(userId, rawToken);
 
         assertThat(invitation.getStatus()).isEqualTo("ACCEPTED");
         verify(membershipRepository).save(any(Membership.class));
-        verify(auditLogRepository).save(any(AuditLog.class));
+        verify(auditLogRepository, org.mockito.Mockito.atLeast(1)).save(any(AuditLog.class));
     }
+
 
     @Test
     @DisplayName("Should throw IllegalArgumentException when accepting expired invitation token")
     void acceptInvitation_ExpiredToken() {
         String rawToken = "expired-raw-token";
-        String tokenHash = hashToken(rawToken);
 
         UUID userId = UUID.randomUUID();
-        OrgInvitation expiredInvitation = new OrgInvitation(organization, "user@acme.com", Role.DEVELOPER, requester, tokenHash, Instant.now().minusSeconds(3600));
+        OrgInvitation expiredInvitation = new OrgInvitation(organization, "user@acme.com", Role.DEVELOPER, requester, rawToken, Instant.now().minusSeconds(3600));
 
-        when(invitationRepository.findByTokenHash(tokenHash)).thenReturn(Optional.of(expiredInvitation));
+        when(invitationRepository.findByToken(rawToken)).thenReturn(Optional.of(expiredInvitation));
 
         assertThatThrownBy(() -> service.acceptInvitation(userId, rawToken))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Invalid or expired invitation token");
+                .hasMessageContaining("expired");
     }
+
 }

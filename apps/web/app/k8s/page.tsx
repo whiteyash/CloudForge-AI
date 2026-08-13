@@ -8,8 +8,13 @@ import { api } from "@/lib/api";
 import { useEnvironment } from "@/context/EnvironmentContext";
 import CloudControlBackground from "@/components/dashboard/CloudControlBackground";
 
+import { useLanguage } from "@/lib/i18n";
+
 export default function K8sOverviewPage() {
   const { environment, environmentConfig, isSwitching } = useEnvironment();
+  const { t } = useLanguage();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [summary, setSummary] = useState<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [nodes, setNodes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,8 +23,14 @@ export default function K8sOverviewPage() {
     setLoading(true);
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const projects = await api.request<any[]>("/orgs/default-org-id/projects").catch(() => []);
-      const projId = projects[0]?.id || "proj-1";
+      const k8sData = await api.request<any>("/k8s/summary").catch(() => null);
+      if (k8sData) {
+        setSummary(k8sData);
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const projects = await api.request<any[]>("/orgs").catch(() => []);
+      const orgProjects = projects[0] ? await api.request<any[]>(`/projects?orgId=${projects[0].id}`).catch(() => []) : [];
+      const projId = orgProjects[0]?.id || "00000000-0000-0000-0000-000000000001";
       const runnerList = await api.getRunners(projId).catch(() => []);
 
       setNodes(runnerList.length > 0 ? runnerList : [
@@ -57,14 +68,14 @@ export default function K8sOverviewPage() {
             <div>
               <div className="flex items-center gap-2.5 mb-1 flex-wrap">
                 <h1 className="text-xl sm:text-2xl font-heading font-extrabold text-[#E7EDF7] tracking-tight">
-                  Kubernetes Control Plane &amp; Cluster Telemetry
+                  {t("Kubernetes Cluster Control Plane")}
                 </h1>
                 <span className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full uppercase font-bold border ${environmentConfig.badgeBg} ${environmentConfig.badgeText} ${environmentConfig.badgeBorder}`}>
                   ENV: {environmentConfig.label}
                 </span>
               </div>
               <p className="text-xs text-[#8B99B8]">
-                Real-time control plane status, runner node pools, and pod telemetry for <strong className="text-[#3DD9C4] font-mono">{environment.toUpperCase()}</strong> cluster
+                {t("Inspect pod telemetry, node metrics, auto-scaler policies, and deployment health")} ({environment.toUpperCase()})
               </p>
             </div>
             <button

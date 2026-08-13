@@ -62,12 +62,12 @@ CREATE INDEX IF NOT EXISTS idx_native_image_builds_project ON native_image_build
 CREATE INDEX IF NOT EXISTS idx_native_image_builds_registry ON native_image_builds(registry_id);
 
 -- Register permissions in RBAC system matrix
-INSERT INTO permissions (id, code, name, category, description)
+INSERT INTO permissions (id, code, module, description)
 VALUES 
-    (gen_random_uuid(), 'REGISTRY_VIEW', 'View Container Registries & Repositories', 'REGISTRY', 'Allows viewing connected container registries and image tags'),
-    (gen_random_uuid(), 'REGISTRY_MANAGE', 'Manage Container Registries', 'REGISTRY', 'Allows connecting and disconnecting container registries'),
-    (gen_random_uuid(), 'IMAGE_BUILD', 'Trigger Native Image Builds', 'REGISTRY', 'Allows triggering container image builds'),
-    (gen_random_uuid(), 'IMAGE_DELETE', 'Delete Container Image Tags', 'REGISTRY', 'Allows deleting non-immutable container image tags')
+    (gen_random_uuid(), 'REGISTRY_VIEW', 'REGISTRY', 'Allows viewing connected container registries and image tags'),
+    (gen_random_uuid(), 'REGISTRY_MANAGE', 'REGISTRY', 'Allows connecting and disconnecting container registries'),
+    (gen_random_uuid(), 'IMAGE_BUILD', 'REGISTRY', 'Allows triggering container image builds'),
+    (gen_random_uuid(), 'IMAGE_DELETE', 'REGISTRY', 'Allows deleting non-immutable container image tags')
 ON CONFLICT (code) DO NOTHING;
 
 

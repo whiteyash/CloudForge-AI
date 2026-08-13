@@ -23,12 +23,14 @@ import { api, OrgDashboardSummaryResponse, AuditLogResponse } from "@/lib/api";
 import { useEnvironment } from "@/context/EnvironmentContext";
 import InviteMemberModal from "@/components/modals/InviteMemberModal";
 import CloudControlBackground from "@/components/dashboard/CloudControlBackground";
+import { useLanguage } from "@/lib/i18n";
 
 export default function DashboardPage() {
   const { environment, isSwitching, environmentConfig } = useEnvironment();
+  const { t } = useLanguage();
   const [summary, setSummary] = useState<OrgDashboardSummaryResponse | null>(null);
   const [activity, setActivity] = useState<AuditLogResponse[]>([]);
-  const [orgId, setOrgId] = useState<string>("default-org-id");
+  const [orgId, setOrgId] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
 
@@ -38,49 +40,14 @@ export default function DashboardPage() {
       const sum = await api.getDashboardSummary(targetOrgId);
       setSummary(sum);
     } catch {
-      setSummary({
-        id: targetOrgId,
-        name: "CloudForge AI Engineering",
-        slug: "cloudforge-engineering",
-        projectsCount: environment === "prod" ? 4 : environment === "staging" ? 3 : 2,
-        membersCount: 4,
-        teamsCount: 3,
-        pendingInvitations: environment === "prod" ? 1 : 2,
-        status: "ACTIVE",
-        createdAt: new Date().toISOString(),
-      });
+      setSummary(null);
     }
 
     try {
       const act = await api.getActivityTimeline(targetOrgId);
       setActivity(act);
     } catch {
-      setActivity([
-        {
-          id: "act-1",
-          orgId: targetOrgId,
-          userId: "u-1",
-          action: "project.deployed",
-          target: `release-${environment}-v2.4.0`,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: "act-2",
-          orgId: targetOrgId,
-          userId: "u-2",
-          action: "member.invited",
-          target: "developer@cloudforge.ai",
-          createdAt: new Date(Date.now() - 3600000).toISOString(),
-        },
-        {
-          id: "act-3",
-          orgId: targetOrgId,
-          userId: "u-3",
-          action: "security.scan_completed",
-          target: `${environment.toUpperCase()}-CLUSTER-K8S`,
-          createdAt: new Date(Date.now() - 7200000).toISOString(),
-        },
-      ]);
+      setActivity([]);
     } finally {
       setLoading(false);
     }
@@ -156,7 +123,7 @@ export default function DashboardPage() {
                 className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#4A72FF] to-[#3DD9C4] hover:from-[#3B5BDB] hover:to-[#34D399] text-[#0A1020] font-heading font-extrabold text-xs shadow-[0_0_20px_rgba(61,217,196,0.35)] flex items-center gap-2 transition-all transform active:scale-95 cursor-pointer"
               >
                 <Plus className="w-4 h-4 stroke-[2.5]" />
-                Invite Member
+                {t("Invite Member")}
               </button>
             </div>
           </div>
@@ -168,7 +135,7 @@ export default function DashboardPage() {
               className="p-5 rounded-2xl bg-[#050F25]/60 backdrop-blur-2xl border border-[#3DD9C4]/30 hover:border-[#3DD9C4] shadow-[0_0_30px_rgba(61,217,196,0.1)] transition-all transform hover:-translate-y-1 group cursor-pointer"
             >
               <div className="flex items-center justify-between text-[#8B99B8] mb-3">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider">Projects</span>
+                <span className="text-xs font-mono font-bold uppercase tracking-wider">{t("PROJECTS")}</span>
                 <div className="w-8 h-8 rounded-lg bg-[#3DD9C4]/15 border border-[#3DD9C4]/30 flex items-center justify-center text-[#3DD9C4]">
                   <Layers className="w-4 h-4" />
                 </div>
@@ -177,8 +144,8 @@ export default function DashboardPage() {
                 {summary?.projectsCount ?? 0}
               </div>
               <div className="mt-2 flex items-center justify-between text-[10px] font-mono">
-                <span className="text-[#3DD9C4]">Active in {environment.toUpperCase()}</span>
-                <span className="text-emerald-400 font-bold">Scoped</span>
+                <span className="text-[#3DD9C4]">{t("Active in")} {environment.toUpperCase()}</span>
+                <span className="text-emerald-400 font-bold">{t("Scoped")}</span>
               </div>
             </Link>
 
@@ -187,7 +154,7 @@ export default function DashboardPage() {
               className="p-5 rounded-2xl bg-[#050F25]/60 backdrop-blur-2xl border border-[#4A72FF]/30 hover:border-[#4A72FF] shadow-[0_0_30px_rgba(74,114,255,0.1)] transition-all transform hover:-translate-y-1 group cursor-pointer"
             >
               <div className="flex items-center justify-between text-[#8B99B8] mb-3">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider">Members</span>
+                <span className="text-xs font-mono font-bold uppercase tracking-wider">{t("MEMBERS")}</span>
                 <div className="w-8 h-8 rounded-lg bg-[#4A72FF]/15 border border-[#4A72FF]/30 flex items-center justify-center text-[#4A72FF]">
                   <Users className="w-4 h-4" />
                 </div>
@@ -196,8 +163,8 @@ export default function DashboardPage() {
                 {summary?.membersCount ?? 0}
               </div>
               <div className="mt-2 flex items-center justify-between text-[10px] font-mono">
-                <span className="text-[#8B99B8]">Active Engineers</span>
-                <span className="text-[#4A72FF] font-bold">RBAC Enforced</span>
+                <span className="text-[#8B99B8]">{t("Active Engineers")}</span>
+                <span className="text-[#4A72FF] font-bold">{t("RBAC Enforced")}</span>
               </div>
             </Link>
 
@@ -206,7 +173,7 @@ export default function DashboardPage() {
               className="p-5 rounded-2xl bg-[#050F25]/60 backdrop-blur-2xl border border-[#FBBF24]/30 hover:border-[#FBBF24] shadow-[0_0_30px_rgba(251,191,36,0.1)] transition-all transform hover:-translate-y-1 group cursor-pointer"
             >
               <div className="flex items-center justify-between text-[#8B99B8] mb-3">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider">Pending Invites</span>
+                <span className="text-xs font-mono font-bold uppercase tracking-wider">{t("PENDING INVITES")}</span>
                 <div className="w-8 h-8 rounded-lg bg-[#FBBF24]/15 border border-[#FBBF24]/30 flex items-center justify-center text-[#FBBF24]">
                   <Mail className="w-4 h-4" />
                 </div>
@@ -215,8 +182,8 @@ export default function DashboardPage() {
                 {summary?.pendingInvitations ?? 0}
               </div>
               <div className="mt-2 flex items-center justify-between text-[10px] font-mono">
-                <span className="text-[#FBBF24]">Awaiting Acceptance</span>
-                <span className="text-[#FBBF24] font-bold">Active Token</span>
+                <span className="text-[#FBBF24]">{t("Awaiting Acceptance")}</span>
+                <span className="text-[#FBBF24] font-bold">{t("Active Token")}</span>
               </div>
             </Link>
 
@@ -225,7 +192,7 @@ export default function DashboardPage() {
               className="p-5 rounded-2xl bg-[#050F25]/60 backdrop-blur-2xl border border-[#A855F7]/30 hover:border-[#A855F7] shadow-[0_0_30px_rgba(168,85,247,0.1)] transition-all transform hover:-translate-y-1 group cursor-pointer"
             >
               <div className="flex items-center justify-between text-[#8B99B8] mb-3">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider">Teams</span>
+                <span className="text-xs font-mono font-bold uppercase tracking-wider">{t("TEAMS")}</span>
                 <div className="w-8 h-8 rounded-lg bg-[#A855F7]/15 border border-[#A855F7]/30 flex items-center justify-center text-[#A855F7]">
                   <Zap className="w-4 h-4" />
                 </div>
@@ -234,7 +201,7 @@ export default function DashboardPage() {
                 {summary?.teamsCount ?? 0}
               </div>
               <div className="mt-2 flex items-center justify-between text-[10px] font-mono">
-                <span className="text-[#8B99B8]">Cross-functional</span>
+                <span className="text-[#8B99B8]">{t("Cross-functional")}</span>
                 <span className="text-[#A855F7] font-bold">DevOps / SRE</span>
               </div>
             </Link>
@@ -246,7 +213,7 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Server className="w-4 h-4 text-[#3DD9C4]" />
-                  <h2 className="text-sm font-heading font-bold text-[#E7EDF7]">Kubernetes Cluster Health</h2>
+                  <h2 className="text-sm font-heading font-bold text-[#E7EDF7]">{t("Kubernetes Cluster Health")}</h2>
                 </div>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold">
                   READY
@@ -255,11 +222,11 @@ export default function DashboardPage() {
 
               <div className="space-y-3">
                 <div className="p-3 rounded-xl bg-[#0A1020]/80 border border-[#22314D] flex items-center justify-between text-xs font-mono">
-                  <span className="text-[#8B99B8]">Target Environment</span>
+                  <span className="text-[#8B99B8]">{t("Target Environment")}</span>
                   <span className="text-[#3DD9C4] font-bold">{environment.toUpperCase()}-K8S-CLUSTER</span>
                 </div>
                 <div className="p-3 rounded-xl bg-[#0A1020]/80 border border-[#22314D] flex items-center justify-between text-xs font-mono">
-                  <span className="text-[#8B99B8]">Node Status</span>
+                  <span className="text-[#8B99B8]">{t("Node Status")}</span>
                   <span className="text-emerald-400 font-bold">{environment === "prod" ? "12/12 Nodes" : environment === "staging" ? "6/6 Nodes" : "3/3 Nodes"}</span>
                 </div>
               </div>
@@ -268,7 +235,7 @@ export default function DashboardPage() {
                 href="/k8s"
                 className="w-full py-2 rounded-xl bg-[#16233A] border border-[#22314D] text-[#3DD9C4] hover:bg-[#1e2f4d] text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
               >
-                <span>Inspect {environment.toUpperCase()} Clusters</span>
+                <span>{t("Inspect Clusters")}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
@@ -277,7 +244,7 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <GitBranch className="w-4 h-4 text-[#4A72FF]" />
-                  <h2 className="text-sm font-heading font-bold text-[#E7EDF7]">CI/CD Pipeline Engine</h2>
+                  <h2 className="text-sm font-heading font-bold text-[#E7EDF7]">{t("CI/CD Pipeline Engine")}</h2>
                 </div>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#4A72FF]/20 text-[#4A72FF] border border-[#4A72FF]/30 font-bold">
                   ACTIVE
@@ -286,11 +253,11 @@ export default function DashboardPage() {
 
               <div className="space-y-3">
                 <div className="p-3 rounded-xl bg-[#0A1020]/80 border border-[#22314D] flex items-center justify-between text-xs font-mono">
-                  <span className="text-[#8B99B8]">Target Release</span>
+                  <span className="text-[#8B99B8]">{t("Target Release")}</span>
                   <span className="text-[#E7EDF7] font-bold">release-{environment}-v2.4.0</span>
                 </div>
                 <div className="p-3 rounded-xl bg-[#0A1020]/80 border border-[#22314D] flex items-center justify-between text-xs font-mono">
-                  <span className="text-[#8B99B8]">Pipeline Status</span>
+                  <span className="text-[#8B99B8]">{t("Pipeline Status")}</span>
                   <span className="text-emerald-400 font-bold flex items-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     SUCCESS
@@ -302,7 +269,7 @@ export default function DashboardPage() {
                 href="/cicd"
                 className="w-full py-2 rounded-xl bg-[#16233A] border border-[#22314D] text-[#4A72FF] hover:bg-[#1e2f4d] text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
               >
-                <span>View {environment.toUpperCase()} Pipelines</span>
+                <span>{t("View Pipelines")}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>

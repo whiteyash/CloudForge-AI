@@ -5,8 +5,11 @@ import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
 import { Laptop, Smartphone, Globe, LogOut, CheckCircle2, ShieldCheck, AlertCircle } from "lucide-react";
 import { api, ActiveSessionResponse } from "@/lib/api";
+import { useEnvironment } from "@/context/EnvironmentContext";
+import CloudControlBackground from "@/components/dashboard/CloudControlBackground";
 
 export default function SessionManagerPage() {
+  const { environment, environmentConfig } = useEnvironment();
   const [sessions, setSessions] = useState<ActiveSessionResponse[]>([]);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -70,21 +73,35 @@ export default function SessionManagerPage() {
   };
 
   return (
-    <div className="flex h-screen bg-[#0A1020] text-[#E7EDF7] overflow-hidden">
+    <div className="flex h-screen bg-[#060A14] text-[#E7EDF7] overflow-hidden relative font-sans">
+      <div className="fixed inset-0 w-full h-full z-0 opacity-40 pointer-events-auto">
+        <CloudControlBackground />
+      </div>
+
       <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10">
         <Header />
 
-        <main className="flex-1 overflow-y-auto p-6 space-y-6 max-w-5xl mx-auto w-full">
-          <div className="flex items-center justify-between">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 max-w-5xl mx-auto w-full">
+          {/* Header Banner */}
+          <div className="p-6 rounded-3xl bg-[#050F25]/75 backdrop-blur-2xl border border-[#3DD9C4]/40 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-[0_0_50px_rgba(61,217,196,0.15)]">
             <div>
-              <h1 className="text-2xl font-heading font-bold text-[#E7EDF7]">Active Session Manager</h1>
-              <p className="text-xs text-[#8B99B8] mt-1">Review active logged-in devices, IP locations, and manage session revocations</p>
+              <div className="flex items-center gap-2.5 mb-1 flex-wrap">
+                <h1 className="text-xl sm:text-2xl font-heading font-extrabold text-[#E7EDF7] tracking-tight">
+                  Active Session Manager
+                </h1>
+                <span className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full uppercase font-bold border ${environmentConfig.badgeBg} ${environmentConfig.badgeText} ${environmentConfig.badgeBorder}`}>
+                  ENV: {environmentConfig.label}
+                </span>
+              </div>
+              <p className="text-xs text-[#8B99B8]">
+                Review logged-in devices, IP locations, and manage session revocations for <strong className="text-[#3DD9C4] font-mono">{environment.toUpperCase()}</strong> context
+              </p>
             </div>
 
             <button
               onClick={handleLogoutAll}
-              className="px-4 py-2 rounded-xl bg-[#F87171]/10 border border-[#F87171]/30 text-[#F87171] hover:bg-[#F87171] hover:text-[#0A1020] font-heading font-bold text-xs transition-all flex items-center gap-1.5"
+              className="px-4 py-2.5 rounded-xl bg-[#F87171]/10 border border-[#F87171]/30 text-[#F87171] hover:bg-[#F87171] hover:text-[#0A1020] font-heading font-extrabold text-xs transition-all flex items-center gap-1.5 cursor-pointer shadow-[0_0_15px_rgba(248,113,113,0.1)]"
             >
               <LogOut className="w-4 h-4" />
               Revoke All Other Sessions
@@ -92,15 +109,15 @@ export default function SessionManagerPage() {
           </div>
 
           {message && (
-            <div className="p-4 rounded-xl bg-[#34D399]/10 border border-[#34D399]/30 text-[#34D399] text-xs flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4" />
+            <div className="p-4 rounded-xl bg-[#34D399]/15 border border-[#34D399]/40 text-[#34D399] text-xs flex items-center gap-2 font-mono">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
               <span>{message}</span>
             </div>
           )}
 
           {error && (
-            <div className="p-4 rounded-xl bg-[#F87171]/10 border border-[#F87171]/30 text-[#F87171] text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4" />
+            <div className="p-4 rounded-xl bg-[#F87171]/15 border border-[#F87171]/40 text-[#F87171] text-xs flex items-center gap-2 font-mono">
+              <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
           )}
@@ -109,10 +126,10 @@ export default function SessionManagerPage() {
             {sessions.map((session) => (
               <div
                 key={session.id}
-                className="p-5 rounded-2xl bg-[#111B2E] border border-[#22314D] flex items-center justify-between"
+                className="p-5 rounded-2xl bg-[#050F25]/60 backdrop-blur-2xl border border-[#22314D] hover:border-[#3DD9C4]/40 flex items-center justify-between transition-all shadow-[0_0_20px_rgba(61,217,196,0.05)]"
               >
                 <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-xl bg-[#16233A] text-[#3DD9C4]">
+                  <div className="p-3 rounded-xl bg-[#0A1020] border border-[#3DD9C4]/40 text-[#3DD9C4] shadow-[0_0_10px_rgba(61,217,196,0.2)]">
                     {session.deviceType === "Mobile" ? <Smartphone className="w-5 h-5" /> : <Laptop className="w-5 h-5" />}
                   </div>
 
@@ -122,7 +139,7 @@ export default function SessionManagerPage() {
                         {session.browser} on {session.operatingSystem}
                       </h3>
                       {session.isCurrent && (
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#34D399]/20 text-[#34D399] border border-[#34D399]/40 flex items-center gap-1">
+                        <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-[#34D399]/20 text-[#34D399] border border-[#34D399]/40 flex items-center gap-1 font-bold">
                           <ShieldCheck className="w-3 h-3" />
                           THIS DEVICE
                         </span>
@@ -141,7 +158,7 @@ export default function SessionManagerPage() {
                 {!session.isCurrent && (
                   <button
                     onClick={() => handleTerminateSession(session.id)}
-                    className="px-3 py-1.5 rounded-lg bg-[#16233A] text-[#8B99B8] hover:text-[#F87171] hover:bg-[#F87171]/10 text-xs font-medium transition-all"
+                    className="px-3 py-1.5 rounded-xl bg-[#0A1020] text-[#8B99B8] hover:text-[#F87171] hover:bg-[#F87171]/10 border border-[#22314D] hover:border-[#F87171]/40 text-xs font-mono font-bold transition-all cursor-pointer"
                   >
                     Revoke Session
                   </button>

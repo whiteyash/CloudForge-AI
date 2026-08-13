@@ -16,14 +16,26 @@ public class TeamDtos {
             String description
     ) {}
 
+    public record UpdateTeamRequest(
+            @Size(max = 120, message = "Team name must be 120 characters or fewer")
+            String name,
+            String description
+    ) {}
+
     public record AddTeamMemberRequest(
-            UUID userId
+            UUID userId,
+            String role
+    ) {}
+
+    public record UpdateTeamMemberRoleRequest(
+            String role
     ) {}
 
     public record TeamMemberSummary(
             UUID userId,
             String email,
             String fullName,
+            String role,
             Instant addedAt
     ) {}
 
@@ -31,7 +43,10 @@ public class TeamDtos {
             UUID id,
             UUID orgId,
             String name,
+            String slug,
             String description,
+            String status,
+            int membersCount,
             List<TeamMemberSummary> members,
             Instant createdAt
     ) {}
