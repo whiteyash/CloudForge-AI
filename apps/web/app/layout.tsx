@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { EnvironmentProvider } from "@/context/EnvironmentContext";
 import { LanguageProvider } from "@/lib/i18n";
+import { MobileSidebarProvider } from "@/context/MobileSidebarContext";
 
 export const metadata: Metadata = {
   title: "CloudForge AI",
@@ -13,7 +14,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en">
       <body>
         <EnvironmentProvider>
-          <LanguageProvider>{children}</LanguageProvider>
+          <LanguageProvider>
+            <MobileSidebarProvider>{children}</MobileSidebarProvider>
+          </LanguageProvider>
         </EnvironmentProvider>
       </body>
     </html>

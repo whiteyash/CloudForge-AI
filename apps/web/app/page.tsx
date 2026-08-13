@@ -129,7 +129,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Quick KPI Metric Cards Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <Link
               href="/projects"
               className="p-5 rounded-2xl bg-[#050F25]/60 backdrop-blur-2xl border border-[#3DD9C4]/30 hover:border-[#3DD9C4] shadow-[0_0_30px_rgba(61,217,196,0.1)] transition-all transform hover:-translate-y-1 group cursor-pointer"

@@ -115,7 +115,7 @@ export default function GlobalAiCopilotPage() {
                   {m.sender === "user" ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
                 </div>
 
-                <div className={`p-4 rounded-2xl max-w-lg text-xs leading-relaxed backdrop-blur-2xl ${
+                <div className={`p-4 rounded-2xl max-w-[85%] sm:max-w-lg text-xs leading-relaxed backdrop-blur-2xl break-words ${
                   m.sender === "user" ? "bg-[#050F25]/80 border border-[#3DD9C4]/40 text-[#E7EDF7]" : "bg-[#050F25]/60 border border-[#22314D] text-[#E7EDF7] shadow-[0_0_20px_rgba(61,217,196,0.06)]"
                 }`}>
                   <p>{m.text}</p>

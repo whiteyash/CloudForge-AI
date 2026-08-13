@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Search, Bell, LogOut, ChevronDown, ShieldCheck, CheckCheck, ExternalLink, Clock } from "lucide-react";
+import { Search, Bell, LogOut, ChevronDown, ShieldCheck, CheckCheck, ExternalLink, Clock, Menu, Zap } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import CommandPalette from "@/components/search/CommandPalette";
 import { useEnvironment, EnvironmentType } from "@/context/EnvironmentContext";
+import { useMobileSidebar } from "@/context/MobileSidebarContext";
 import { api } from "@/lib/api";
 
 import { useLanguage } from "@/lib/i18n";
@@ -52,6 +53,7 @@ function notificationTypeToLocal(type: string): "info" | "warning" | "error" | "
 export default function Header({ userEmail = "admin@cloudforge.ai", userFullName = "Platform Engineer", onLogout }: HeaderProps) {
   const router = useRouter();
   const { environment, setEnvironment } = useEnvironment();
+  const { toggleMobileSidebar } = useMobileSidebar();
   const { t, formatDateTime, timezone } = useLanguage();
   const [showMenu, setShowMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -142,15 +144,33 @@ export default function Header({ userEmail = "admin@cloudforge.ai", userFullName
 
   return (
     <>
-      <header className="h-14 bg-[#111B2E] border-b border-[#22314D] px-6 flex items-center justify-between shrink-0 z-20">
-        {/* Environment Selector Pill & Quick Search */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center p-1 rounded-lg bg-[#0A1020] border border-[#22314D]">
+      <header className="h-14 bg-[#111B2E] border-b border-[#22314D] px-3 sm:px-6 flex items-center justify-between shrink-0 z-20">
+        {/* Left Side: Mobile Hamburger + Brand Logo + Environment Selector */}
+        <div className="flex items-center gap-2 sm:gap-4">
+          {/* Hamburger Menu Toggle Button (Mobile < 1024px) */}
+          <button
+            onClick={toggleMobileSidebar}
+            className="lg:hidden p-1.5 rounded-lg text-[#8B99B8] hover:text-[#E7EDF7] hover:bg-[#16233A] border border-[#22314D] transition-colors cursor-pointer"
+            title="Open navigation menu"
+          >
+            <Menu className="w-5 h-5 text-[#3DD9C4]" />
+          </button>
+
+          {/* Compact Brand Mark on Mobile */}
+          <Link href="/" className="lg:hidden flex items-center gap-1.5 font-heading font-bold text-sm text-[#E7EDF7]">
+            <div className="w-6 h-6 rounded-md bg-gradient-to-br from-[#3DD9C4] to-[#16233A] flex items-center justify-center text-[#0A1020] shadow-[0_0_8px_rgba(61,217,196,0.4)]">
+              <Zap className="w-3.5 h-3.5 stroke-[2.5]" />
+            </div>
+            <span className="hidden xs:inline">CloudForge</span>
+          </Link>
+
+          {/* Environment Selector Pill (DEV / STAGING / PROD) */}
+          <div className="flex items-center p-0.5 sm:p-1 rounded-lg bg-[#0A1020] border border-[#22314D]">
             {(["dev", "staging", "prod"] as const).map((env) => (
               <button
                 key={env}
                 onClick={() => setEnvironment(env as EnvironmentType)}
-                className={`px-3 py-1 text-xs font-mono font-medium rounded-md uppercase transition-all cursor-pointer ${
+                className={`px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-mono font-medium rounded-md uppercase transition-all cursor-pointer ${
                   environment === env
                     ? env === "prod"
                       ? "bg-[#F87171]/20 text-[#F87171] border border-[#F87171]/40 shadow-[0_0_12px_rgba(248,113,113,0.3)]"
@@ -165,7 +185,7 @@ export default function Header({ userEmail = "admin@cloudforge.ai", userFullName
             ))}
           </div>
 
-          {/* ⌘K Command Search Palette Trigger */}
+          {/* ⌘K Command Search Palette Trigger (Desktop) */}
           <div
             onClick={() => setCommandPaletteOpen(true)}
             className="relative hidden md:flex items-center cursor-pointer"

@@ -198,7 +198,7 @@ export default function MembersPage() {
           </div>
 
           {/* Members Table */}
-          <div className="rounded-2xl bg-[#050F25]/60 backdrop-blur-2xl border border-[#22314D] shadow-[0_0_30px_rgba(61,217,196,0.08)] overflow-hidden">
+          <div className="rounded-2xl bg-[#050F25]/60 backdrop-blur-2xl border border-[#22314D] shadow-[0_0_30px_rgba(61,217,196,0.08)] overflow-x-auto">
             <table className="w-full text-left text-xs text-[#E7EDF7]">
               <thead className="bg-[#0A1020]/90 border-b border-[#22314D] font-mono text-[10px] text-[#8B99B8] uppercase tracking-wider">
                 <tr>
