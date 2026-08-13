@@ -12,6 +12,9 @@ spring:
     url: ${SPRING_DATASOURCE_URL:${DATABASE_URL:jdbc:h2:mem:cloudforgedb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL}}
     username: ${SPRING_DATASOURCE_USERNAME:${POSTGRES_USER:${DATABASE_USER:sa}}}
     password: ${SPRING_DATASOURCE_PASSWORD:${POSTGRES_PASSWORD:${DATABASE_PASSWORD:}}}
+    hikari:
+      initialization-fail-timeout: 3000
+      connection-timeout: 5000
   data:
     redis:
       repositories:
